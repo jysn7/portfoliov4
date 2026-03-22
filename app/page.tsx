@@ -1,19 +1,21 @@
-import { Button } from "@/components/ui/button"
+'use client';
 
-export default function Page() {
+import Hero from '@/components/landing/Hero';
+import About from '@/components/landing/About';
+import Contact from '@/components/landing/Contact';
+import Footer from '@/components/global/Footer';
+
+export default function Portfolio() {
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
+    <main className="flex-1 w-full max-w-[1400px] mx-auto flex flex-col z-10 relative">
+      <Hero />
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-12 mt-32 md:mt-48 lg:mt-64 pb-12">
+        <Contact />
+        <About />
       </div>
-    </div>
-  )
+
+      <Footer />
+    </main>
+  );
 }
