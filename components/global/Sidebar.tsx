@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, Linkedin, Instagram, Github, Twitter, MessageCircle, ArrowUp } from 'lucide-react';
+import { Moon, Sun, ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import gsap from 'gsap';
 
@@ -11,14 +11,7 @@ const navItems = [
   { name: 'Home', href: '/' },
   { name: 'Works', href: '/works' },
   { name: 'Gallery', href: '/gallery' },
-];
-
-const socials = [
-  { icon: Github, href: "https://github.com/jysn7" },
-  { icon: Linkedin, href: "https://www.linkedin.com/in/jayson-baloyi-2a01512b0" },
-  { icon: Instagram, href: "https://instagram.com/amant.dur" },
-  { icon: Twitter, href: "https://x.com/jyysn7" },
-  { icon: MessageCircle, href: "https://wa.me/+27780345709" }
+  { name: 'Contact', href: '/contact' },
 ];
 
 export default function Sidebar() {
@@ -65,12 +58,12 @@ export default function Sidebar() {
         ease: 'power2.in'
       })
       .to(sidebarRef.current, {
-        width: '240px',
-        height: '400px',
-        borderRadius: '120px',
+        width: '180px',
+        height: '280px',
+        borderRadius: '90px',
         backgroundColor: 'var(--background)',
         backdropFilter: 'blur(10px)',
-        border: '2px solid var(--border)',
+        border: '1px solid var(--border)',
         duration: 0.6,
         ease: 'expo.out',
       }, '-=0.1')
@@ -129,64 +122,54 @@ export default function Sidebar() {
     <>
       <div 
         ref={containerRef} 
-        className="fixed top-1/2 left-5 md:left-10 -translate-y-1/2 z-50 flex items-center justify-center"
+        className="fixed top-1/2 left-5 md:left-10 -translate-y-1/2 z-50 flex flex-col items-center gap-4"
       >
-        <div 
-          ref={ringRef}
-          className="absolute w-12 h-12  border-[2px] border-muted-foreground/50 border-t-transparent border-r-transparent rounded-full pointer-events-none"
-        />
-
-        <aside 
-          ref={sidebarRef}
-          onMouseEnter={() => { if (window.innerWidth > 768) toggleSidebar(true); }}
-          onMouseLeave={() => { if (window.innerWidth > 768) toggleSidebar(false); }}
-          onClick={() => { if (window.innerWidth <= 768) toggleSidebar(); }}
-          className="relative w-14 bg-amber-900 h-14 flex flex-col items-center justify-center pointer-events-auto cursor-pointer overflow-hidden"
-        >
-          <div 
-            ref={contentRef} 
-            className="hidden opacity-0 translate-y-4 pointer-events-none flex-col items-center justify-center gap-8 w-full px-8 h-full"
-          >
+        <div className="flex items-center justify-center w-12 h-12">
             <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-full w-9 h-9 text-muted-foreground hover:text-foreground hover:bg-muted"
-              onClick={(e) => {
-                e.stopPropagation();
-                setTheme(theme === 'dark' ? 'light' : 'dark');
-              }}
-            >
-              <Sun className="h-4 w-4 dark:scale-0 transition-all" />
-              <Moon className="absolute h-4 w-4 scale-0 dark:scale-100 transition-all" />
+                variant="ghost"
+                size="icon"
+                className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setTheme(theme === 'dark' ? 'light' : 'dark');
+                }}
+              >
+                <Sun className="h-4 w-4 dark:scale-0 transition-all" />
+                <Moon className="absolute h-4 w-4 scale-0 dark:scale-100 transition-all" />
             </Button>
+        </div>
 
-            <nav className="flex flex-col items-center gap-6">
-              {navItems.map((item) => (
-                <Link 
-                  key={item.name} 
-                  href={item.href}
-                  className="text-[10px] tracking-[0.4em] uppercase text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+        <div className="relative flex items-center justify-center">
+            <div 
+            ref={ringRef}
+            className="absolute w-12 h-12 border-2 border-muted-foreground border-t-transparent border-r-transparent rounded-full pointer-events-none"
+            />
 
-            <div className="flex gap-5 pt-6 border-t border-border w-28 justify-center">
-              {socials.map((social, i) => (
-                <a 
-                  key={i} 
-                  href={social.href} 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <social.icon className="w-3.5 h-3.5" />
-                </a>
-              ))}
+            <aside 
+            ref={sidebarRef}
+            onMouseEnter={() => { if (window.innerWidth > 768) toggleSidebar(true); }}
+            onMouseLeave={() => { if (window.innerWidth > 768) toggleSidebar(false); }}
+            onClick={() => { if (window.innerWidth <= 768) toggleSidebar(); }}
+            className="relative w-14 h-14 flex flex-col items-center justify-center pointer-events-auto cursor-pointer overflow-hidden"
+            >
+            <div 
+                ref={contentRef} 
+                className="hidden opacity-0 translate-y-4 pointer-events-none flex-col items-center justify-center w-full h-full"
+            >
+                <nav className="flex flex-col items-center gap-6">
+                    {navItems.map((item) => (
+                    <Link 
+                        key={item.name} 
+                        href={item.href}
+                        className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        {item.name}
+                    </Link>
+                    ))}
+                </nav>
             </div>
-          </div>
-        </aside>
+            </aside>
+        </div>
       </div>
 
       <button
@@ -200,8 +183,6 @@ export default function Sidebar() {
           transition-all duration-500 ease-in-out
           ${showBackToTop ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-50 pointer-events-none'}
         `}
-        onMouseEnter={() => gsap.to(topBtnRef.current, { y: -4, duration: 0.3 })}
-        onMouseLeave={() => gsap.to(topBtnRef.current, { y: 0, duration: 0.3 })}
       >
         <ArrowUp className="w-4 h-4" />
       </button>

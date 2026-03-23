@@ -7,6 +7,7 @@ import Sidebar from "@/components/global/Sidebar";
 import Header from "@/components/global/Header";
 import GrainEffect from "@/components/effects/GrainEffect";
 import Spotlight from "@/components/effects/Spotlight";
+import Footer from "@/components/global/Footer";
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
@@ -38,6 +39,7 @@ export default function RootLayout({
             <div className="relative z-10 w-full">
               {children}
             </div>
+            <Footer />
             
           </ThemeProvider>
         </EffectProvider>

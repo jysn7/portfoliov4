@@ -54,11 +54,15 @@
   --card-foreground: #252525;
   --popover: #ffffff;
   --popover-foreground: #252525;
-  --border: #ebebeb;
-  --input: #ebebeb;
-  --ring: #b5b5b5;
-  --muted: #f7f7f7;
-  --muted-foreground: #8f8f8f;
+  
+  /* Increased Visibility for Outlines */
+  --border: #dddddd;           /* From #ebebeb - slightly darker for better definition */
+  --input: #e0e0e0;            /* From #ebebeb - consistent with border */
+  --ring: #a3a3a3;             /* From #b5b5b5 - sharper focus ring */
+  
+  --muted: #ececec;
+  --muted-foreground: #757575; /* From #8f8f8f - better legibility for small text */
+  
   --destructive: #d1441f;
   --secondary: #f7f7f7;
   --secondary-foreground: #252525;
@@ -70,10 +74,10 @@
   /* Sidebar Light */
   --sidebar: #fafafa;
   --sidebar-foreground: #252525;
-  --sidebar-primary: #252525; /* no green */
+  --sidebar-primary: #252525;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-border: #ebebeb;
-  --sidebar-ring: #b5b5b5;
+  --sidebar-border: #e2e2e2;   /* Matches main border visibility */
+  --sidebar-ring: #a3a3a3;
 
   /* Radius */
   --radius: 0.625rem;

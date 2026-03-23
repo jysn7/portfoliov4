@@ -82,7 +82,7 @@ export default function GalleryPage() {
   }, []);
 
   return (
-    <main className="w-full max-w-[1400px] mx-auto pt-75 pl-12 md:pl-22 pr-12 select-none">
+    <main className="w-full max-w-[1400px] mx-auto pt-75 pl-18 md:pl-22 pr-12 select-none">
       <div className="flex flex-col gap-4 mb-32 border-b border-border pb-6 md:pb-12">
         <h1 className="text-6xl md:text-[8rem] font-thin tracking-tighter uppercase leading-none text-foreground">
           Gallery

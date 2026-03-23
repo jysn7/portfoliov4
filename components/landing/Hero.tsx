@@ -61,7 +61,7 @@ export default function Hero() {
           ref={subRef}
           className="mt-6 md:mt-8 text-lg md:text-2xl font-extralight tracking-wider text-[var(--foreground)]"
         >
-          3rd Year Comp Sci / Web Developer
+          Artist - Web Developer
         </p>
       </div>
     </section>

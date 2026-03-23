@@ -10,12 +10,10 @@ export default function Portfolio() {
     <main className="flex-1 w-full max-w-[1400px] mx-auto flex flex-col z-10 relative">
       <Hero />
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-12 mt-32 md:mt-48 lg:mt-64 pb-12">
+      <div className="grid pl-18 md:pl-22 grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-12 mt-32 md:mt-48 lg:mt-64 pb-12">
         <Contact />
         <About />
       </div>
-
-      <Footer />
     </main>
   );
 }

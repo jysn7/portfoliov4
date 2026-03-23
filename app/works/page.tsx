@@ -25,7 +25,6 @@ export default function WorksPage() {
       ? works
       : works.filter((w) => w.category === activeFilter);
 
-  // Spine scroll
   useEffect(() => {
     if (!titleContainerRef.current) return;
 
