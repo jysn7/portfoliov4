@@ -60,7 +60,7 @@ export default function Contact() {
             {emailAddress}
           </span>
 
-          {/* Feedback Layer (Click to Copy) */}
+          {/* Feedback Layer */}
           <span 
             className={`
               absolute inset-0 flex items-center lg:justify-end text-muted-foreground
@@ -71,7 +71,6 @@ export default function Contact() {
             Copied to clipboard
           </span>
           
-          {/* Minimalist animated underline */}
           <div className="w-full h-px bg-border mt-2 relative overflow-hidden">
             <div className="absolute inset-0 bg-foreground -translate-x-full group-hover:translate-x-0 transition-transform duration-700 ease-expo" />
           </div>

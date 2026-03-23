@@ -42,7 +42,7 @@ export default function ContactPage() {
     <main ref={scope} className="w-full select-none overflow-x-hidden">
       <div className="max-w-350 mx-auto pt-75 pl-22 pr-6 pb-40">
         
-        {/* Header Section */}
+        {/* Header */}
         <div className="max-w-full flex flex-col gap-12 mb-24 border-b border-border pb-20 relative">
           <h1 ref={titleRef} className="text-5xl md:text-[8rem] font-thin tracking-tighter uppercase leading-none text-foreground">
             Contact
@@ -59,7 +59,7 @@ export default function ContactPage() {
 
         <div className="flex flex-col md:flex-row w-full gap-20">
           
-          {/* Left Column: Socials & Map */}
+          {/* Left Column */}
           <div ref={leftColRef} className="w-full md:w-1/3 flex flex-col gap-16">
             
             <div className="flex flex-col gap-10">
@@ -89,7 +89,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Map below info */}
+            {/* Map */}
             <div className="w-full aspect-video bg-muted/10 border border-border  overflow-hidden  transition-all duration-1000">
               <iframe 
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d114964.38271708293!2d28.10660235!3d-25.74786765!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1e95619cae60f215%3A0x1d3780c1df07270f!2sPretoria!5e0!3m2!1sen!2sza!4v1711220000000!5m2!1sen!2sza"
@@ -99,7 +99,7 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* Right Column: Form */}
+          {/* Right Column */}
           <form 
             ref={formRef}
             className="w-full md:w-1/2 flex flex-col gap-8"
@@ -137,14 +137,12 @@ export default function ContactPage() {
                     type="submit"
                     className="group relative flex items-center gap-8 py-4 bg-foreground px-10 border border-border rounded-lg overflow-hidden transition-all duration-700 hover:border-foreground active:scale-[0.98]"
                 >
-                    {/* The Modern Wipe: Fills from the bottom with a slight rotate-x for depth */}
                     <div className="absolute inset-0 bg-foreground translate-y-[101%] group-hover:translate-y-0 transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)]" />
 
                     <span className="relative z-10 text-xs text-background uppercase tracking-[0.5em] transition-colors duration-500 group-hover:text-background">
                     send message
                     </span>
 
-                    {/* Minimalist Arrow that appears on hover */}
                     <div className="relative z-10 w-0 h-px bg-background transition-all duration-500 group-hover:w-6" />
                 </button>
                 </div>

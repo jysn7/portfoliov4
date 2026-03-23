@@ -76,7 +76,7 @@ export default function WorksPage() {
 
   return (
     <main ref={scope} className="w-full select-none overflow-x-hidden">
-      <div className="max-w-[1400px] mx-auto pt-75 pl-22 pr-12">
+      <div className="max-w-350 mx-auto pt-75 pl-22 pr-12">
 
         <WorksHeader
           activeFilter={activeFilter}

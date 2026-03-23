@@ -63,7 +63,7 @@ export default function FilterBar({
               {f}
             </span>
 
-            {/* Minimalist Line */}
+            {/*  Line */}
             <div className={`
               relative z-10 h-0.5 bg-background transition-all duration-500
               ${isActive ? 'w-3' : 'w-0 group-hover:w-3'}

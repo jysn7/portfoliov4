@@ -12,18 +12,16 @@ export default function GrainEffect() {
   useEffect(() => {
     if (!grain || !waveRef.current) return;
 
-    // Create a timeline for the rolling interference wave
     const tl = gsap.timeline({ repeat: -1, repeatDelay: Math.random() * 2 });
 
     tl.fromTo(waveRef.current, 
       { top: "-20%", opacity: 0 },
       { 
         top: "120%", 
-        opacity: 0.3, // Increased opacity for visibility
+        opacity: 0.3, 
         duration: 1.2, 
         ease: "none",
         onStart: () => {
-          // Randomly skew the wave each time it passes
           gsap.set(waveRef.current, { skewY: Math.random() * 2 });
         }
       }
@@ -37,10 +35,10 @@ export default function GrainEffect() {
   if (!grain) return null;
 
   return (
-    <div ref={containerRef} className="fixed inset-0 z-[9999] pointer-events-none overflow-hidden">
-      {/* 1. Heavy Static Layer */}
+    <div ref={containerRef} className="fixed inset-0 z-9999 pointer-events-none overflow-hidden">
+      {/* Static */}
       <div 
-        className="absolute inset-[-100%] opacity-[0.15] contrast-[150%] brightness-[120%]"
+        className="absolute inset-full opacity-[0.25] contrast-150 brightness-120"
         style={{ 
           backgroundImage: `url('https://grainy-gradients.vercel.app/noise.svg')`,
           backgroundSize: '100px 100px',
@@ -48,10 +46,10 @@ export default function GrainEffect() {
         }}
       />
 
-      {/* 2. The Interference Wave (The Glitch) */}
+      {/* The Glitch */}
       <div 
         ref={waveRef}
-        className="absolute left-0 w-full h-[15vh] bg-white/10 blur-[40px] mix-blend-overlay border-t border-white/5"
+        className="absolute left-0 w-full h-[15vh] bg-foreground/10 blur-2xl mix-blend-overlay border-t border-white/5"
       />
 
       <style dangerouslySetInnerHTML={{ __html: `

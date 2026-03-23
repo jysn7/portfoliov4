@@ -22,7 +22,6 @@ function VideoPlayer({ src }: { src: string }) {
         loop
         muted={isMuted}
         playsInline
-        // Removed h-full/w-full absolute positioning
         className="w-full h-auto block transition-transform duration-1000 scale-[1.02] group-hover/video:scale-100"
       />
       <button
@@ -51,7 +50,6 @@ export default function GalleryPage() {
       const mm = gsap.matchMedia();
       
       mm.add("(min-width: 768px)", () => {
-        // Reduced movement to prevent content from flying off-screen
         gsap.fromTo(rightColRef.current, 
           { y: "5vh" }, 
           {
@@ -82,7 +80,7 @@ export default function GalleryPage() {
   }, []);
 
   return (
-    <main className="w-full max-w-[1400px] mx-auto pt-75 pl-18 md:pl-22 pr-12 select-none">
+    <main className="w-full max-w-350 mx-auto pt-75 pl-18 md:pl-22 pr-12 select-none">
       <div className="flex flex-col gap-4 mb-32 border-b border-border pb-6 md:pb-12">
         <h1 className="text-6xl md:text-[8rem] font-thin tracking-tighter uppercase leading-none text-foreground">
           Gallery
@@ -91,7 +89,7 @@ export default function GalleryPage() {
           <p className="text-xs text-muted-foreground uppercase tracking-[0.5em]">
             Art Collection
           </p>
-          <span className="text-xs tracking-[0.2em] opacity-40 text-foreground uppercase">@amant.dur</span>
+          <span className="text-sm tracking-[0.2em] opacity-40 text-foreground ">@amant.dur</span>
         </div>
       </div>
 
@@ -130,7 +128,6 @@ function PhotoCard({ item, index }: { item: GalleryItem, index: number }) {
               <Image 
                 src={item.image} 
                 alt={item.title} 
-                // These settings allow the image to define the container height
                 width={0}
                 height={0}
                 sizes="100vw"
@@ -153,11 +150,11 @@ function PhotoCard({ item, index }: { item: GalleryItem, index: number }) {
             <div className="flex flex-col w-full border-t border-border/40">
               <div className="flex justify-between items-center py-4 border-b border-border/40">
                 <span className="text-[9px] uppercase tracking-[0.3em] opacity-40 text-muted-foreground">Category</span>
-                <span className="text-[10px] uppercase tracking-[0.1em] text-foreground">{item.category}</span>
+                <span className="text-[10px] uppercase tracking-widest text-foreground">{item.category}</span>
               </div>
               <div className="flex justify-between items-center py-4 border-b border-border/40">
                 <span className="text-[9px] uppercase tracking-[0.3em] opacity-40 text-muted-foreground">Medium</span>
-                <span className="text-[10px] uppercase tracking-[0.1em] text-foreground">{item.medium}</span>
+                <span className="text-[10px] uppercase tracking-widest text-foreground">{item.medium}</span>
               </div>
             </div>
           </div>

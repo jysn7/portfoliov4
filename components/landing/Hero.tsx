@@ -10,7 +10,7 @@ export default function Hero() {
   useEffect(() => {
     if (!nameRef.current) return;
 
-    // We use a fixed string to prevent accidental double-renders or innerText issues
+    // I use a fixed string to prevent accidental double-renders or innerText issues
     const textLines = ["Jayson", "Baloyi"];
     
     // Clear and rebuild the HTML with proper line handling
@@ -42,7 +42,7 @@ export default function Hero() {
         { y: 0, opacity: 1, duration: 1 },
         "-=1.2"
       );
-    }, nameRef); // Scope to nameRef to target chars safely
+    }, nameRef);
 
     return () => ctx.revert();
   }, []);
@@ -52,14 +52,14 @@ export default function Hero() {
       <div className="flex flex-col text-right max-w-full">
         <h1 
           ref={nameRef}
-          className="text-6xl md:text-8xl lg:text-9xl font-thin tracking-tight leading-none text-[var(--foreground)] uppercase"
+          className="text-6xl md:text-8xl lg:text-9xl font-thin tracking-tight leading-none text-foreground uppercase"
         >
           {/* Initial text for SEO, GSAP will replace this */}
           Jayson Baloyi
         </h1>
         <p 
           ref={subRef}
-          className="mt-6 md:mt-8 text-lg md:text-2xl font-extralight tracking-wider text-[var(--foreground)]"
+          className="mt-6 md:mt-8 text-lg md:text-2xl font-extralight tracking-wider text-foreground"
         >
           Artist - Web Developer
         </p>

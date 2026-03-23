@@ -41,8 +41,7 @@ export default function Spotlight() {
   if (!spotlight || !mounted) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] pointer-events-none flex items-center justify-center overflow-hidden">
-      {/* Outer Blackout - Uses border to create the frame without heavy shadows */}
+    <div className="fixed inset-0 z-9999 pointer-events-none flex items-center justify-center overflow-hidden">
       <div 
         ref={frameRef}
         className="relative w-[92vw] md:w-[96vw] h-[92vh] md:h-[94vh] rounded-[32px] md:rounded-[48px] border-black border-[50vw] md:border-[100vh] flex-none"
@@ -51,7 +50,7 @@ export default function Spotlight() {
         {/* Inner Glass Edge */}
         <div className="lens-edge absolute inset-0 border border-white/5 rounded-[32px] md:rounded-[48px]" />
 
-        {/* Brackets - Positioned tighter for Mobile */}
+        {/* Brackets */}
         <div className="camera-bracket absolute top-6 md:top-12 left-6 md:left-12 w-6 h-6 border-t border-l border-white/20" />
         <div className="camera-bracket absolute top-6 md:top-12 right-6 md:right-12 w-6 h-6 border-t border-r border-white/20" />
         <div className="camera-bracket absolute bottom-6 md:bottom-12 left-6 md:left-12 w-6 h-6 border-b border-l border-white/20" />
@@ -66,7 +65,7 @@ export default function Spotlight() {
         </div>
 
         {/* Minimal Lens Glare */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-br from-white/2 to-transparent" />
       </div>
     </div>
   );

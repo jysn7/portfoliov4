@@ -17,9 +17,8 @@ const socials = [
 export default function Footer() {
   return (
     <footer className="w-full bg-background pt-32 pb-12 px-6 md:px-12 border-t border-border mt-40">
-      <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-20">
+      <div className="max-w-350 mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-20">
         
-        {/* Massive Minimalist Branding */}
         <div className="flex pl-18 md:pl-0 flex-col gap-2">
           <p className="text-[10px] uppercase tracking-[0.5em] text-muted-foreground ml-1">
             Web Designer & Developer
@@ -29,7 +28,6 @@ export default function Footer() {
           </h2>
         </div>
 
-        {/* Simplified Links Section */}
         <div className="flex gap-20 md:gap-32 mb-4">
           
           {/* Navigation */}
@@ -69,7 +67,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom Copyright Bar */}
-      <div className="max-w-[1400px] items-center mx-auto mt-24 pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between gap-4 text-[9px] uppercase tracking-[0.4em] text-muted-foreground">
+      <div className="max-w-350 items-center mx-auto mt-24 pt-8 border-t border-border/50 flex flex-col md:flex-row justify-between gap-4 text-[9px] uppercase tracking-[0.4em] text-muted-foreground">
         <span>Johannesburg, South Africa</span>
         <span>© 2026 All Rights Reserved</span>
       </div>

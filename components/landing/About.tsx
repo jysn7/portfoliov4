@@ -34,7 +34,7 @@ export default function About() {
         ease: "power3.out",
       });
 
-      // Border fade in (clean, not width-based)
+      // Border fade in
       tl.fromTo(
         headerRef.current,
         { borderColor: "transparent" },
@@ -46,7 +46,7 @@ export default function About() {
         "-=0.6"
       );
 
-      // Paragraphs (scoped ONLY to this section)
+      // Paragraphs
       tl.from(paragraphs, {
         opacity: 0,
         y: 24,
