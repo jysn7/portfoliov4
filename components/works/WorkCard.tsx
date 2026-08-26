@@ -26,7 +26,7 @@ export default function WorkCard({
       </div>
 
       {/* Media */}
-      <div className="relative w-full aspect-[16/10] overflow-hidden bg-muted/10">
+      <div className="relative w-full aspect-16/10 overflow-hidden bg-muted/10">
         {project.isVideo ? (
           <VideoPlayer src={project.image} />
         ) : (
@@ -40,7 +40,7 @@ export default function WorkCard({
       </div>
 
       {/* Content */}
-      <p className="text-xl md:text-2xl text-foreground/90 font-light">
+      <p className="text-md md:text-2xl text-foreground/90 font-light">
         {project.description}
       </p>
 

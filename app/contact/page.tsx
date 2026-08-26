@@ -40,16 +40,16 @@ export default function ContactPage() {
 
   return (
     <main ref={scope} className="w-full select-none overflow-x-hidden">
-      <div className="max-w-350 mx-auto pt-75 pl-22 pr-6 pb-40">
+      <div className="max-w-350 mx-auto pt-75 px-6 pb-40">
         
         {/* Header */}
         <div className="max-w-full flex flex-col gap-12 mb-24 border-b border-border pb-20 relative">
-          <h1 ref={titleRef} className="text-5xl md:text-[8rem] font-thin tracking-tighter uppercase leading-none text-foreground">
+          <h1 ref={titleRef} className="text-5xl md:text-8xl tracking-tighter uppercase leading-none text-foreground">
             Contact
           </h1>
           
           <div className="max-w-xl">
-            <p className="text-sm text-foreground font-extralight italic tracking-widest leading-relaxed">
+            <p className="text-sm text-foreground italic tracking-widest leading-relaxed">
               have a project in mind or just want to chat? 
               drop a message below. i usually respond 
               faster than a compiler error.

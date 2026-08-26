@@ -1,49 +1,53 @@
-import { Geist_Mono, Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils";
-import { EffectProvider } from "@/context/EffectContext";
-import Sidebar from "@/components/global/Sidebar";
-import Header from "@/components/global/Header";
-import GrainEffect from "@/components/effects/GrainEffect";
-import Spotlight from "@/components/effects/Spotlight";
-import Footer from "@/components/global/Footer";
+import { Montserrat } from "next/font/google";
+import "./globals.css";
+import Sidebar from "../components/global/Sidebar";
+import Footer from "../components/global/Footer";
+import { ThemeProvider } from "next-themes";
+import { cn } from "../lib/utils";
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
-const fontMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
+// Montserrat — Body font
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-body",
+  weight: ["100", "300", "400", "500", "700", "900"],
+  style: ["normal", "italic"],
+});
+
+// Montserrat — Heading font (bolder weight range, same family)
+const montserratHeading = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-heading",
+  weight: ["400", "500", "700", "900"],
+});
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}>
-      <body className="bg-background min-h-screen selection:bg-white/10">
-        <EffectProvider>
-          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-            
-            {/* Background Layer */}
-            <GrainEffect />
-            <Spotlight />
-
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn(
+        "antialiased",
+        montserrat.variable,
+        montserratHeading.variable
+      )}
+    >
+      <body className="bg-background min-h-screen selection:bg-white/10 font-body">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
             {/* Navigation Layer (Fixed/Absolute) */}
             <Sidebar />
-            <div className="fixed top-0 right-0 w-full z-50 p-6 md:p-12 lg:p-24 pointer-events-none">
-              <div className="pointer-events-auto">
-                <Header />
-              </div>
-            </div>
-
-            {/* Content Layer: No global padding/margins here */}
-            <div className="relative z-10 w-full">
-              {children}
-            </div>
+            <div className="relative z-10 w-full">{children}</div>
             <Footer />
-            
           </ThemeProvider>
-        </EffectProvider>
       </body>
     </html>
-  )
+  );
 }

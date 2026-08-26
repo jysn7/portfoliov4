@@ -39,7 +39,7 @@ export default function WorksHeader({
   return (
     <div ref={headerRef} className="max-w-full flex flex-col gap-12 mb-40 border-b border-border pb-20 relative">
       
-      <h1 ref={titleRef} className="text-5xl md:text-[8rem] font-thin tracking-tighter uppercase leading-none text-foreground">
+      <h1 ref={titleRef} className="text-5xl md:text-[8rem] font- tracking-tighter uppercase leading-none text-foreground">
         Works
       </h1>
 
@@ -50,10 +50,10 @@ export default function WorksHeader({
       />
 
       <div ref={descriptionRef} className="mt-8 max-w-xl">
-        <p className="text-sm font-extralight text-foreground italic leading-relaxed">
+        <p className="text-sm text-foreground italic leading-relaxed">
           a collection of things i made while caffeinated. 
-    mostly just ideas and pixels arranged until they looked right. 
-    feel free to look around, they don't bite.
+          mostly just ideas and pixels arranged until they looked right. 
+          feel free to look around, they don't bite.
         </p>
       </div>
     </div>

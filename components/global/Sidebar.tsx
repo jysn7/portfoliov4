@@ -2,10 +2,9 @@
 
 import { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { Moon, Sun, ArrowUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import gsap from 'gsap';
+import { Menu, X, ArrowUp, Sun, Moon } from 'lucide-react';
 
 const navItems = [
   { name: 'Home', href: '/' },
@@ -14,177 +13,199 @@ const navItems = [
   { name: 'Contact', href: '/contact' },
 ];
 
+const taglines = [
+  'CS STUDENT',
+  'SOFTWARE ENGINEER',
+  'CREATIVE WRITER',
+  'PHOTOGRAPHER',
+];
+
+const COLLAPSED_HEIGHT = 78;
+
 export default function Sidebar() {
-  const { setTheme, theme } = useTheme();
+  const pathname = usePathname();
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  
-  const containerRef = useRef<HTMLDivElement>(null);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
-  const topBtnRef = useRef<HTMLButtonElement>(null);
+  const [taglineIndex, setTaglineIndex] = useState(0);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const taglineRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => setMounted(true), []);
+
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
   useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 400);
-    };
+    const handleScroll = () => setShowBackToTop(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleSidebar = (forceState?: boolean) => {
-    const nextState = forceState ?? !isOpen;
-    if (nextState === isOpen) return;
-    setIsOpen(nextState);
-
-    gsap.killTweensOf([sidebarRef.current, contentRef.current, ringRef.current]);
-
-    if (nextState) {
-      const tl = gsap.timeline();
-      tl.to(ringRef.current, {
-        rotate: 360,
-        duration: 0.4,
-        ease: 'power2.inOut'
-      })
-      .to(ringRef.current, {
-        scale: 0,
-        opacity: 0,
-        duration: 0.2,
-        ease: 'power2.in'
-      })
-      .to(sidebarRef.current, {
-        width: '180px',
-        height: '280px',
-        borderRadius: '90px',
-        backgroundColor: 'var(--background)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid var(--border)',
-        duration: 0.6,
-        ease: 'expo.out',
-      }, '-=0.1')
-      .to(contentRef.current, {
-        display: 'flex',
-        opacity: 1,
-        y: 0,
-        pointerEvents: 'auto',
-        duration: 0.4,
-        ease: 'power2.out'
-      }, '-=0.3');
-
-    } else {
-      const tl = gsap.timeline();
-      tl.to(contentRef.current, {
-        opacity: 0,
-        y: 10,
-        pointerEvents: 'none',
-        duration: 0.2,
-        ease: 'power2.in',
-        onComplete: () => {
-          gsap.set(contentRef.current, { display: 'none' });
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!taglineRef.current) {
+        setTaglineIndex((i) => (i + 1) % taglines.length);
+        return;
+      }
+      taglineRef.current.style.opacity = '0';
+      taglineRef.current.style.transform = 'translateY(-6px)';
+      
+      setTimeout(() => {
+        setTaglineIndex((i) => (i + 1) % taglines.length);
+        if (taglineRef.current) {
+          taglineRef.current.style.transform = 'translateY(6px)';
+          setTimeout(() => {
+            if (taglineRef.current) {
+              taglineRef.current.style.opacity = '1';
+              taglineRef.current.style.transform = 'translateY(0)';
+            }
+          }, 30);
         }
-      })
-      .to(sidebarRef.current, {
-        width: '56px',
-        height: '56px',
-        borderRadius: '999px',
-        backgroundColor: 'transparent',
-        backdropFilter: 'blur(0px)',
-        border: '1px solid transparent',
-        duration: 0.5,
-        ease: 'expo.inOut',
-      })
-      .set(ringRef.current, { rotate: 0 })
-      .to(ringRef.current, {
-        scale: 1,
-        opacity: 1,
-        duration: 0.3,
-        ease: 'power2.out'
-      }, '-=0.2');
-    }
+      }, 200);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleDock = (forceState?: boolean) => {
+    const nextState = forceState ?? !isOpen;
+    setIsOpen(nextState);
   };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        toggleSidebar(false);
+        setIsOpen(false);
       }
     };
     if (isOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
+  const isDark = resolvedTheme === 'dark';
+
   return (
     <>
-      <div 
-        ref={containerRef} 
-        className="fixed top-1/2 left-5 md:left-10 -translate-y-1/2 z-50 flex flex-col items-center gap-4"
+      <div
+        ref={containerRef}
+        className="fixed bottom-6 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 max-w-2xl mx-auto sm:mx-0 px-4"
       >
-        <div className="flex items-center justify-center w-12 h-12">
-            <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full w-8 h-8 text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setTheme(theme === 'dark' ? 'light' : 'dark');
+        <div
+          ref={dockRef}
+          className={`relative flex flex-col justify-end items-center w-full transition-all duration-300 ease-in-out
+            bg-background/90 backdrop-blur-xl border-2 border-border/40
+            ${isOpen ? 'rounded-2xl' : 'rounded-2xl'}
+          `}
+          style={{ 
+            height: isOpen ? 'auto' : COLLAPSED_HEIGHT,
+            minHeight: COLLAPSED_HEIGHT
+          }}
+        >
+          <div
+            ref={contentRef}
+            className={`flex-col gap-1 px-2 pt-5 pb-4 w-full transition-all duration-300
+              ${isOpen ? 'flex opacity-100 translate-y-0' : 'hidden opacity-0 translate-y-2'}
+            `}
+          >
+            {navItems.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`group flex items-center gap-4 rounded-xl px-5 py-3.5 transition-all duration-200
+                    ${active 
+                      ? 'bg-accent/80 text-accent-foreground font-semibold' 
+                      : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground'
+                    }
+                  `}
+                >
+                  <span className="text-sm font-medium tracking-wide">
+                    {item.name}
+                  </span>
+                  {active && (
+                    <span className="ml-auto w-1.5 h-1.5 rounded-full bg-foreground animate-pulse" />
+                  )}
+                </Link>
+              );
+            })}
+            <div className="h-px bg-border/40 mx-4 mt-2" />
+          </div>
+
+          <div className="flex items-center gap-4 h-[78px] px-6 shrink-0 w-full">
+            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-muted/60 shrink-0 border border-border/40 ring-1 ring-border/20 shadow-sm">
+              <div
+                className="absolute inset-0 transition-transform duration-300 hover:scale-105"
+                style={{
+                  backgroundImage: `url(/avatar.png)`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
                 }}
-              >
-                <Sun className="h-4 w-4 dark:scale-0 transition-all" />
-                <Moon className="absolute h-4 w-4 scale-0 dark:scale-100 transition-all" />
-            </Button>
-        </div>
-
-        <div className="relative flex items-center justify-center">
-            <div 
-            ref={ringRef}
-            className="absolute w-12 h-12 border-2 border-muted-foreground border-t-transparent border-r-transparent rounded-full pointer-events-none"
-            />
-
-            <aside 
-            ref={sidebarRef}
-            onMouseEnter={() => { if (window.innerWidth > 768) toggleSidebar(true); }}
-            onMouseLeave={() => { if (window.innerWidth > 768) toggleSidebar(false); }}
-            onClick={() => { if (window.innerWidth <= 768) toggleSidebar(); }}
-            className="relative w-14 h-14 flex flex-col items-center justify-center pointer-events-auto cursor-pointer overflow-hidden"
-            >
-            <div 
-                ref={contentRef} 
-                className="hidden opacity-0 translate-y-4 pointer-events-none flex-col items-center justify-center w-full h-full"
-            >
-                <nav className="flex flex-col items-center gap-6">
-                    {navItems.map((item) => (
-                    <Link 
-                        key={item.name} 
-                        href={item.href}
-                        className="text-[10px] tracking-[0.3em] uppercase text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        {item.name}
-                    </Link>
-                    ))}
-                </nav>
+              />
             </div>
-            </aside>
+
+            <div className="flex flex-col min-w-0 flex-1 justify-center">
+              <span className="text-sm font-semibold tracking-tight text-foreground truncate">
+                JAYSON BALOYI
+              </span>
+              <span
+                ref={taglineRef}
+                className="text-[11px] font-medium tracking-wider text-muted-foreground truncate transition-all duration-300 uppercase inline-block"
+              >
+                {taglines[taglineIndex]}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setTheme(isDark ? 'light' : 'dark')}
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                className="flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              >
+                {mounted ? (
+                  isDark ? <Sun size={17} className="transition-transform duration-300 hover:rotate-45" /> : <Moon size={17} className="transition-transform duration-300 hover:-rotate-12" />
+                ) : (
+                  <span className="w-[17px] h-[17px]" />
+                )}
+              </button>
+
+              <button
+                onClick={() => toggleDock()}
+                aria-label={isOpen ? 'Close menu' : 'Open menu'}
+                className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200
+                  ${isOpen
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                  }
+                `}
+              >
+                {isOpen ? <X size={17} /> : <Menu size={17} />}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <button
-        ref={topBtnRef}
         onClick={scrollToTop}
-        className={`
-          fixed bottom-10 left-7 md:left-12 z-50
-          flex items-center justify-center w-10 h-10 
-          rounded-full border border-border bg-background/50 backdrop-blur-sm
-          text-muted-foreground hover:text-foreground hover:border-foreground
-          transition-all duration-500 ease-in-out
-          ${showBackToTop ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-50 pointer-events-none'}
+        aria-label="Back to top"
+        className={`fixed bottom-6 right-6 md:right-10 z-50
+          flex items-center justify-center w-11 h-11
+          rounded-xl bg-background/90 backdrop-blur-xl border border-border/40
+          shadow-lg shadow-foreground/5 text-muted-foreground hover:text-foreground hover:bg-accent/50
+          transition-all duration-300 ease-in-out
+          ${showBackToTop 
+            ? 'opacity-100 translate-y-0 scale-100' 
+            : 'opacity-0 translate-y-12 scale-90 pointer-events-none'
+          }
         `}
       >
-        <ArrowUp className="w-4 h-4" />
+        <ArrowUp className="w-4 h-4 transition-transform duration-200 hover:-translate-y-0.5" />
       </button>
     </>
   );
