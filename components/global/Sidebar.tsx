@@ -60,7 +60,7 @@ export default function Navbar() {
   const knobFirst = useRef(true);
   const panelFirst = useRef(true);
 
-  const isDark = mounted && resolvedTheme === 'light';
+  const isDark = mounted && resolvedTheme === 'dark';
 
   // ---------------------------------------------------------------------------
   // Entrance: logo tile spins in, greeting types, chips drop in with a bounce
