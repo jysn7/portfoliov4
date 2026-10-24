@@ -13,7 +13,7 @@ import {
 } from 'react';
 import { flushSync } from 'react-dom';
 import Image, { type StaticImageData } from 'next/image';
-import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowUpRight } from 'lucide-react';
 import gsap from 'gsap';
 
 import { works, Category } from '../../lib/works';
@@ -22,6 +22,7 @@ const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : use
 
 const STEP = 22; // degrees between works on the dial
 const IMG_SIZES = '(min-width: 768px) 640px, 90vw';
+const MASK = 'linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%)';
 
 /* signpost board shape (arrow tip depth comes from --tip) */
 const SIGN_R = 'polygon(0 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, 0 100%)';
@@ -36,6 +37,16 @@ const reduced = () =>
 const t = (s: number) => (reduced() ? 0 : s);
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const pad = (x: number) => String(x).padStart(2, '0');
+
+/* The flapper on the wheel: pegs push it up, then it flicks back past centre and settles.
+   s = 0 is a work sitting dead-centre; a peg crosses the flapper at s = 0.5. */
+const FLAP_MAX = 18;
+const flapAngle = (pos: number) => {
+  const s = pos - Math.floor(pos);
+  if (s >= 0.3 && s < 0.5) return FLAP_MAX * ((s - 0.3) / 0.2);
+  if (s >= 0.5 && s < 0.7) return -FLAP_MAX * 0.45 * ((0.7 - s) / 0.2);
+  return 0;
+};
 
 /* ------------------------------------------------------------------ */
 /* Normalise whatever shape `works` has into one view model.            */
@@ -145,17 +156,22 @@ export default function WorksPage() {
   const bodyRef = useRef<HTMLDivElement>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
   const plateRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
+  const faceRef = useRef<HTMLDivElement>(null);
+  const pegRingRef = useRef<HTMLDivElement>(null);
   const hubRef = useRef<HTMLDivElement>(null);
-  const capRef = useRef<HTMLDivElement>(null);
-  const markerRef = useRef<HTMLSpanElement>(null);
+  const hubSpinRef = useRef<HTMLDivElement>(null);
+  const flapRef = useRef<HTMLDivElement>(null);
+  const pivotRef = useRef<HTMLSpanElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  const cursorTextRef = useRef<HTMLSpanElement>(null);
   const infoRef = useRef<HTMLDivElement>(null);
   const detailRef = useRef<HTMLDivElement>(null);
   const slotRef = useRef<HTMLDivElement>(null);
   const flyRef = useRef<HTMLDivElement>(null);
   const flyInnerRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const imgRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const flapTo = useRef<ReturnType<typeof gsap.quickTo> | null>(null);
 
   const dial = useRef({ pos: 0 });
   const size = useRef({ W: 0, H: 0, R: 0, cx: 0, cy: 0 });
@@ -181,10 +197,17 @@ export default function WorksPage() {
   );
   viewsRef.current = views;
 
+  /* bezel ticks (every quarter step) */
   const ticks = useMemo(() => {
     const count = Math.min(64, 33 + 4 * Math.max(0, views.length - 1));
     return Array.from({ length: count }, (_, k) => ({ deg: (k - 16) * (STEP / 4), major: (k - 16) % 4 === 0 }));
   }, [views.length]);
+
+  /* pegs sit half a step between works, so the flapper rests between two pegs on every work */
+  const pegs = useMemo(
+    () => Array.from({ length: views.length + 3 }, (_, k) => (k - 1.5) * STEP),
+    [views.length]
+  );
 
   const n = views.length;
   const cur = views[selected ?? active] ?? views[0];
@@ -199,22 +222,28 @@ export default function WorksPage() {
 
     const fitH = H * 0.72;
     const R = mobile
-      ? clamp(Math.min(fitH, W * 0.72), 150, 290)
-      : clamp(Math.min(fitH, W * 0.62), 220, 540);
+      ? clamp(Math.min(fitH, W * 0.7), 150, 290)
+      : clamp(Math.min(fitH, W * 0.42), 220, 520);
     const cx = W;
     const cy = H / 2;
     size.current = { W, H, R, cx, cy };
 
     const ring = (el: HTMLElement | null, r: number) =>
       el && gsap.set(el, { x: cx - r, y: cy - r, width: r * 2, height: r * 2 });
-    ring(plateRef.current, R * 0.94);
-    ring(trackRef.current, R);
-    ring(innerRef.current, R * 0.62);
-    ring(hubRef.current, R * 0.4);
-    ring(capRef.current, R * 0.12);
-    if (markerRef.current) gsap.set(markerRef.current, { x: cx - R * 0.66, y: cy, xPercent: -50, yPercent: -50 });
+    ring(plateRef.current, R * 1.45);
+    ring(faceRef.current, R * 0.66);
+    ring(pegRingRef.current, R * 0.5);
+    ring(hubRef.current, R * 0.26);
 
-    const ch = R * 0.35;
+    // flapper: base on the pivot, tip pointing out toward the works
+    const L = R * 0.27;
+    const fh = clamp(R * 0.075, 14, 34);
+    const pivotX = cx - R * 0.3;
+    if (flapRef.current)
+      gsap.set(flapRef.current, { x: pivotX - L, y: cy - fh / 2, width: L, height: fh, transformOrigin: '100% 50%' });
+    if (pivotRef.current) gsap.set(pivotRef.current, { x: pivotX, y: cy, xPercent: -50, yPercent: -50 });
+
+    const ch = R * 0.37;
     cardRefs.current.forEach((el) => el && gsap.set(el, { width: ch * 1.6, height: ch }));
   }, []);
 
@@ -241,10 +270,19 @@ export default function WorksPage() {
         autoAlpha: op,
         zIndex: Math.round(100 - ad * 10),
       });
+
+      // parallax: the picture slides against the card as it travels
+      const img = imgRefs.current[i];
+      if (img) {
+        const dd = clamp(d, -1.6, 1.6);
+        gsap.set(img, { x: dd * -6, y: dd * -9 });
+      }
     });
 
     if (plateRef.current) gsap.set(plateRef.current, { rotate: pos * STEP });
-    if (hubRef.current) gsap.set(hubRef.current, { rotate: pos * STEP * 1.6 });
+    if (pegRingRef.current) gsap.set(pegRingRef.current, { rotate: pos * STEP });
+    if (hubSpinRef.current) gsap.set(hubSpinRef.current, { rotate: pos * STEP * 1.6 });
+    flapTo.current?.(flapAngle(pos));
 
     const r = clamp(Math.round(pos), 0, Math.max(0, viewsRef.current.length - 1));
     if (r !== activeRef.current) {
@@ -407,6 +445,7 @@ export default function WorksPage() {
   /* ---------------- reset on filter change ---------------- */
   useIsoLayoutEffect(() => {
     cardRefs.current.length = views.length;
+    imgRefs.current.length = views.length;
     gsap.killTweensOf([dial.current, flyRef.current, wheelRef.current, infoRef.current, detailRef.current]);
     modeRef.current = 'browse';
     busy.current = false;
@@ -429,7 +468,10 @@ export default function WorksPage() {
     const body = bodyRef.current;
     if (!body) return;
     const stage = stageRef.current;
-    const els = [dial.current, flyRef.current, wheelRef.current, infoRef.current, detailRef.current, stage];
+    const flap = flapRef.current;
+    const els = [dial.current, flyRef.current, wheelRef.current, infoRef.current, detailRef.current, stage, flap];
+
+    if (flap) flapTo.current = gsap.quickTo(flap, 'rotation', { duration: 0.18, ease: 'power3.out' });
 
     if (!reduced()) {
       dial.current.pos = -2;
@@ -471,7 +513,7 @@ export default function WorksPage() {
     );
   }, [active]);
 
-  /* wheel */
+  /* mouse wheel turns the dial (page still scrolls at either end) */
   useEffect(() => {
     const body = bodyRef.current;
     if (!body) return;
@@ -500,7 +542,50 @@ export default function WorksPage() {
     };
   }, [layout, goTo]);
 
-  /* drag */
+  /* cursor chip: "drag" over the wheel, "open" over a work (mouse only) */
+  useEffect(() => {
+    const body = bodyRef.current;
+    const chip = cursorRef.current;
+    if (!body || !chip || !window.matchMedia('(pointer: fine)').matches) return;
+
+    gsap.set(chip, { autoAlpha: 0, scale: 0.6 });
+    const qx = gsap.quickTo(chip, 'x', { duration: 0.35, ease: 'power3.out' });
+    const qy = gsap.quickTo(chip, 'y', { duration: 0.35, ease: 'power3.out' });
+    let shown = false;
+
+    const show = (v: boolean) => {
+      if (v === shown) return;
+      shown = v;
+      gsap.to(chip, { autoAlpha: v ? 1 : 0, scale: v ? 1 : 0.6, duration: 0.25, ease: 'power3.out', overwrite: 'auto' });
+    };
+    const onMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      const b = body.getBoundingClientRect();
+      const { R, cx } = size.current;
+      const lx = e.clientX - b.left;
+      const ly = e.clientY - b.top;
+      const inDial =
+        modeRef.current === 'browse' && !busy.current && viewsRef.current.length > 0 && lx > cx - R * 1.45;
+      if (!inDial) return show(false);
+      if (!shown) gsap.set(chip, { x: lx + 18, y: ly + 18 });
+      show(true);
+      qx(lx + 18);
+      qy(ly + 18);
+      if (cursorTextRef.current)
+        cursorTextRef.current.textContent = (e.target as Element).closest('[data-card]') ? 'open' : 'drag';
+    };
+    const onLeave = () => show(false);
+
+    body.addEventListener('pointermove', onMove);
+    body.addEventListener('pointerleave', onLeave);
+    return () => {
+      body.removeEventListener('pointermove', onMove);
+      body.removeEventListener('pointerleave', onLeave);
+      gsap.killTweensOf(chip);
+    };
+  }, []);
+
+  /* drag: vertical with a mouse, horizontal swipe on touch (so the page can still scroll) */
   const onWheelPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (modeRef.current !== 'browse' || busy.current) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -508,24 +593,26 @@ export default function WorksPage() {
     dragMoved.current = false;
     if (len < 2) return;
 
+    const isTouch = e.pointerType !== 'mouse';
+    const axis = (ev: { clientX: number; clientY: number }) => (isTouch ? ev.clientX : ev.clientY);
     const px = size.current.R * ((STEP * Math.PI) / 180);
-    const y0 = e.clientY;
+    const a0 = axis(e);
     const p0 = dial.current.pos;
-    let lastY = y0;
+    let last = a0;
     let lastT = performance.now();
     let v = 0;
     gsap.killTweensOf(dial.current);
 
     const move = (ev: PointerEvent) => {
-      const dy = ev.clientY - y0;
-      if (Math.abs(dy) > 6) dragMoved.current = true;
+      const d = axis(ev) - a0;
+      if (Math.abs(d) > 6) dragMoved.current = true;
       if (!dragMoved.current) return;
-      dial.current.pos = clamp(p0 - dy / px, 0, len - 1);
+      dial.current.pos = clamp(p0 - d / px, 0, len - 1);
       layout();
       const now = performance.now();
       const dt = now - lastT;
-      if (dt > 0) v = v * 0.6 + ((-(ev.clientY - lastY) / px / dt) * 1000) * 0.4;
-      lastY = ev.clientY;
+      if (dt > 0) v = v * 0.6 + ((-(axis(ev) - last) / px / dt) * 1000) * 0.4;
+      last = axis(ev);
       lastT = now;
     };
     const up = () => {
@@ -572,7 +659,8 @@ export default function WorksPage() {
   };
 
   const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
-  const roundBtn = `grid size-11 place-items-center rounded-full bg-muted text-foreground transition-colors duration-200 hover:bg-foreground hover:text-background ${focus}`;
+  const roundBtn = `grid size-11 place-items-center rounded-full bg-muted text-foreground transition-colors duration-200 hover:bg-foreground hover:text-background disabled:pointer-events-none disabled:opacity-30 ${focus}`;
+  const step = (d: number) => goTo(clamp(Math.round(dial.current.pos) + d, 0, Math.max(0, n - 1)), 0.6);
 
   return (
     <main className="relative w-full select-none overflow-x-hidden">
@@ -680,17 +768,24 @@ export default function WorksPage() {
           {cur ? (mode === 'detail' ? `Opened ${cur.title}` : `${cur.title}, ${active + 1} of ${n}`) : ''}
         </p>
 
-        <div ref={bodyRef} className="relative h-[40rem] md:h-[clamp(36rem,84svh,54rem)]">
+        <div ref={bodyRef} className="relative overflow-hidden h-[40rem] md:h-[clamp(36rem,84svh,54rem)]">
           {n === 0 && (
             <p className="absolute inset-0 grid place-items-center font-display text-lg italic text-muted-foreground">
               nothing in this category yet
             </p>
           )}
 
-          <div ref={wheelRef} onPointerDown={onWheelPointerDown} className="pointer-events-none absolute inset-0">
+          {/* The wheel (masked top and bottom so it fades instead of spilling out) */}
+          <div
+            ref={wheelRef}
+            onPointerDown={onWheelPointerDown}
+            className="pointer-events-none absolute inset-0"
+            style={{ maskImage: MASK, WebkitMaskImage: MASK }}
+          >
+            {/* bezel: tick marks and numbers, turns with the dial */}
             <div
               ref={plateRef}
-              className="pointer-events-auto absolute left-0 top-0 cursor-grab touch-pan-x rounded-full border border-border bg-card/60 active:cursor-grabbing"
+              className="pointer-events-auto absolute left-0 top-0 cursor-grab touch-pan-y rounded-full border border-border bg-card/60 active:cursor-grabbing"
             >
               {ticks.map(({ deg, major }) => {
                 const idx = deg / STEP;
@@ -716,51 +811,101 @@ export default function WorksPage() {
               })}
             </div>
 
-            <div ref={trackRef} aria-hidden className="absolute left-0 top-0 rounded-full border border-dashed border-border" />
+            {/* still face of the wheel */}
+            <div ref={faceRef} aria-hidden className="pointer-events-none absolute left-0 top-0 rounded-full border border-border bg-card" />
 
-            <div ref={innerRef} aria-hidden className="absolute left-0 top-0 rounded-full border border-border/60" />
-
-            <div ref={hubRef} aria-hidden className="absolute left-0 top-0 rounded-full border border-border">
-              <span className="absolute left-5 top-1/2 h-px w-6 -translate-y-1/2 bg-foreground/40" />
+            {/* pegs between the works; they turn with the dial and knock the flapper */}
+            <div ref={pegRingRef} aria-hidden className="pointer-events-none absolute left-0 top-0">
+              {pegs.map((deg) => (
+                <span key={deg} className="absolute inset-0" style={{ transform: `rotate(${-deg}deg)` }}>
+                  <span
+                    className="absolute left-0 top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 bg-[#b9bfc6]"
+                    style={{ borderColor: INK }}
+                  />
+                </span>
+              ))}
             </div>
 
-            <div ref={capRef} aria-hidden className="absolute left-0 top-0 rounded-full border border-border bg-card">
-              <span className="absolute inset-0 m-auto size-1.5 rounded-full bg-foreground/60" />
+            {/* wooden hub with a crank knob, so you can see it turning */}
+            <div
+              ref={hubRef}
+              aria-hidden
+              className="pointer-events-none absolute left-0 top-0"
+              style={{ filter: `drop-shadow(-3px 4px 0 ${INK})` }}
+            >
+              <div
+                ref={hubSpinRef}
+                className="absolute inset-0 rounded-full"
+                style={{
+                  backgroundColor: '#c98d51',
+                  backgroundImage: GRAIN,
+                  backgroundSize: '260px 100px',
+                  border: `3px solid ${INK}`,
+                }}
+              >
+                <span
+                  className="absolute left-[10%] top-1/2 size-4 -translate-y-1/2 rounded-full border-[3px] bg-[#FF8FA3] md:size-5"
+                  style={{ borderColor: INK }}
+                />
+              </div>
             </div>
 
-            <span ref={markerRef} aria-hidden className="absolute left-0 top-0">
-              <span className="block size-3 rotate-45 rounded-[3px] border border-foreground/50 bg-card" />
-            </span>
+            {/* the flapper that points at the active work */}
+            <div ref={flapRef} aria-hidden className="pointer-events-none absolute left-0 top-0">
+              <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="size-full overflow-visible">
+                <polygon
+                  points="2,20 98,2 98,38"
+                  fill="#FF8FA3"
+                  stroke={INK}
+                  strokeWidth="3"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
+            </div>
+            <span
+              ref={pivotRef}
+              aria-hidden
+              className="pointer-events-none absolute left-0 top-0 size-3.5 rounded-full border-[3px] bg-[#b9bfc6]"
+              style={{ borderColor: INK }}
+            />
 
+            {/* works */}
             {views.map((v, i) => (
               <button
                 key={v.id}
                 ref={(el) => {
                   cardRefs.current[i] = el;
                 }}
+                data-card
                 type="button"
                 aria-label={`Open ${v.title}`}
                 onClick={() => {
                   if (dragMoved.current) return;
                   open(i);
                 }}
-                className={`group pointer-events-auto absolute left-0 top-0 touch-pan-x overflow-hidden rounded-xl bg-muted text-left transition-[box-shadow,transform] duration-300 ease-out ${focus} ${
-                  i === active
-                    ? '-translate-x-0.5 -translate-y-0.5 shadow-[6px_6px_0_var(--primary)]'
-                    : ''
+                className={`group pointer-events-auto absolute left-0 top-0 touch-pan-y overflow-hidden rounded-xl bg-muted text-left transition-[box-shadow,transform] duration-300 ease-out ${focus} ${
+                  i === active ? '-translate-x-0.5 -translate-y-0.5 shadow-[6px_6px_0_var(--primary)]' : ''
                 }`}
               >
                 {v.image ? (
-                  <Image
-                    src={v.image}
-                    alt=""
-                    fill
-                    draggable={false}
-                    sizes={IMG_SIZES}
-                    className={`pointer-events-none object-cover transition-transform duration-[900ms] ease-out ${
-                      i === active ? 'scale-[1.03]' : ''
-                    }`}
-                  />
+                  <span
+                    ref={(el) => {
+                      imgRefs.current[i] = el;
+                    }}
+                    className="pointer-events-none absolute -inset-4"
+                  >
+                    <Image
+                      src={v.image}
+                      alt=""
+                      fill
+                      draggable={false}
+                      sizes={IMG_SIZES}
+                      className={`object-cover transition-transform duration-[900ms] ease-out ${
+                        i === active ? 'scale-[1.03]' : ''
+                      }`}
+                    />
+                  </span>
                 ) : null}
                 <span className="absolute bottom-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-full bg-card/90 px-2.5 py-1 font-pixel text-xs text-foreground backdrop-blur">
                   {v.title}
@@ -769,9 +914,10 @@ export default function WorksPage() {
             ))}
           </div>
 
+          {/* Left: what the dial is pointing at */}
           <div className="pointer-events-none absolute inset-0 z-10">
             <div className="mx-auto flex h-full max-w-350 items-start px-6 pt-8 md:items-center md:px-12 md:pt-0">
-              <div ref={infoRef} className="max-w-[55%] md:max-w-md">
+              <div ref={infoRef} className="max-w-[55%] md:max-w-xs lg:max-w-md">
                 {cur && (
                   <>
                     <p data-info className="font-pixel text-xs tabular-nums text-muted-foreground">
@@ -790,10 +936,33 @@ export default function WorksPage() {
                   <span className="md:hidden">swipe the dial, tap to open</span>
                   <span className="hidden md:inline">drag or scroll the dial, click to open</span>
                 </p>
+                {n > 1 && (
+                  <div className="pointer-events-auto mt-5 flex items-center gap-2">
+                    <button
+                      type="button"
+                      aria-label="Previous work"
+                      disabled={active <= 0}
+                      onClick={() => step(-1)}
+                      className={roundBtn}
+                    >
+                      <ArrowUp size={18} strokeWidth={1.5} aria-hidden />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next work"
+                      disabled={active >= n - 1}
+                      onClick={() => step(1)}
+                      className={roundBtn}
+                    >
+                      <ArrowDown size={18} strokeWidth={1.5} aria-hidden />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
+          {/* Details: image slot on the left, copy on the right */}
           <div ref={detailRef} className="invisible absolute inset-0 z-20">
             <div className="mx-auto flex h-full max-w-350 flex-col gap-4 px-6 py-5 md:px-12 md:py-8">
               <div data-detail className="flex items-center justify-between">
@@ -886,6 +1055,7 @@ export default function WorksPage() {
             </div>
           </div>
 
+          {/* The flying image: starts on the dial, lands in the slot */}
           <div
             ref={flyRef}
             aria-hidden
@@ -896,6 +1066,16 @@ export default function WorksPage() {
                 <Image src={cur.image} alt="" fill draggable={false} sizes={IMG_SIZES} className="object-cover" />
               ) : null}
             </div>
+          </div>
+
+          {/* Cursor chip (mouse only) */}
+          <div ref={cursorRef} aria-hidden className="pointer-events-none invisible absolute left-0 top-0 z-40">
+            <span
+              ref={cursorTextRef}
+              className="flex h-8 items-center rounded-full bg-foreground px-3.5 font-pixel text-xs text-background"
+            >
+              drag
+            </span>
           </div>
         </div>
       </section>

@@ -22,15 +22,15 @@ import {
   Volume2,
   VolumeX,
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 /* ------------------------------------------------------------------ */
 /* constants                                                            */
 /* ------------------------------------------------------------------ */
 
-/* signpost board shape (arrow tip depth comes from --tip) */
 const SIGN_R = 'polygon(0 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, 0 100%)';
 
-/* wood: cartoon outline + tileable grain (horizontal for boards, vertical for the post) */
 const INK = '#2a1608';
 const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='100' viewBox='0 0 260 100'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cg stroke='%23b27237' stroke-width='2.5'%3E%3Cpath d='M0 16 C40 8 70 24 120 16 S200 8 260 16'/%3E%3Cpath d='M0 42 C50 50 90 34 140 42 S220 50 260 42'/%3E%3Cpath d='M0 68 C30 60 80 76 130 68 S210 60 260 68'/%3E%3Cpath d='M0 90 C60 96 100 84 150 90 S230 96 260 90'/%3E%3C/g%3E%3Cg stroke='%23d9a265' stroke-width='2'%3E%3Cpath d='M20 29 C60 23 90 35 130 29'/%3E%3Cpath d='M150 56 C190 50 220 62 250 56'/%3E%3Cpath d='M10 79 C40 75 70 83 100 79'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 const VGRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='200' viewBox='0 0 40 200'%3E%3Cg fill='none' stroke='%23915427' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M10 0 C14 50 6 100 10 150 S14 190 10 200'/%3E%3Cpath d='M28 0 C24 40 32 90 28 140 S24 190 28 200'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
@@ -124,7 +124,6 @@ const t = (s: number) => (reduced() ? 0 : s);
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 const angDiff = (a: number, b: number) => ((a - b + 540) % 360) - 180;
 
-/* tiny synth for the clicks, no audio files needed */
 const sfx = {
   ctx: null as AudioContext | null,
   on: true,
@@ -201,23 +200,6 @@ function Board({
         </div>
       </div>
     </div>
-  );
-}
-
-function Line({ n, label, children }: { n: string; label: string; children: ReactNode }) {
-  return (
-    <label className="group relative block">
-      <span className="flex items-baseline gap-3 font-pixel text-xs text-muted-foreground transition-colors duration-300 group-focus-within:text-foreground">
-        <span className="tabular-nums">{n}</span>
-        {label}
-      </span>
-      {children}
-      <span aria-hidden className="absolute bottom-0 left-0 h-0.5 w-full bg-border" />
-      <span
-        aria-hidden
-        className="absolute bottom-0 left-0 h-0.5 w-full origin-left scale-x-0 bg-foreground transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] group-focus-within:scale-x-100"
-      />
-    </label>
   );
 }
 
@@ -551,8 +533,10 @@ export default function ContactPage() {
   const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
   const pill = `flex h-10 items-center gap-1.5 rounded-full px-5 font-pixel text-xs transition-colors duration-200 ${focus}`;
   const pillSoft = `${pill} bg-muted text-foreground hover:bg-foreground hover:text-background`;
-  const input =
-    'mt-3 block w-full min-w-0 select-text bg-transparent pb-4 font-display font-soft text-2xl tracking-[-0.02em] text-foreground outline-none placeholder:text-muted-foreground placeholder:opacity-100 md:text-3xl';
+
+  // Borderless fields on a secondary surface. Smaller text than before.
+  const field =
+    'w-full rounded-lg border-none bg-transparent px-3 py-2 text-sm text-foreground shadow-none outline-none placeholder:text-muted-foreground placeholder:opacity-70 focus-visible:border-none focus-visible:ring-0';
 
   const hint = !off
     ? 'tap the handset to pick up'
@@ -613,9 +597,10 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <div className="mx-auto max-w-350 px-6 pt-[17rem] md:flex md:min-h-[26rem] md:items-end md:justify-end md:px-12 md:pt-0">
+        <div className="mx-auto max-w-6xl px-4 pt-[17rem] md:flex md:min-h-[26rem] md:items-end md:justify-end md:px-8 md:pt-0">
           <div data-reveal className="max-w-[34ch] md:pb-4">
-            <p className="font-display text-lg italic leading-snug text-foreground md:text-xl">
+            <p className="font-pixel text-xs tracking-wide text-muted-foreground">let&apos;s talk</p>
+            <p className="mt-2 font-display text-lg italic leading-snug text-foreground md:text-xl">
               have a project in mind, or just want to chat?
             </p>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
@@ -626,11 +611,11 @@ export default function ContactPage() {
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto mt-20 max-w-350 px-6 md:mt-32 md:px-12">
+      <section className="relative z-10 mx-auto mt-20 max-w-6xl px-4 md:mt-32 md:px-8">
         <div className="grid gap-16 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-24">
           <div className="flex flex-col gap-14">
             <div data-reveal>
-              <p className="mb-5 font-pixel text-xs text-muted-foreground">find me</p>
+              <p className="mb-5 font-pixel text-xs tracking-wide text-muted-foreground">find me</p>
               <ul className="flex flex-col gap-1">
                 {LINKS.map((item) => (
                   <li key={item.label}>
@@ -660,7 +645,7 @@ export default function ContactPage() {
             </div>
 
             <div data-reveal>
-              <p className="mb-3 font-pixel text-xs text-muted-foreground">based in</p>
+              <p className="mb-3 font-pixel text-xs tracking-wide text-muted-foreground">based in</p>
               <p className="font-display font-soft text-3xl leading-none tracking-[-0.03em] text-foreground md:text-4xl">
                 johannesburg,
                 <br />
@@ -673,43 +658,51 @@ export default function ContactPage() {
             </div>
           </div>
 
-          <form data-reveal onSubmit={onSubmit} noValidate className="flex flex-col gap-10 md:gap-12">
+          <form data-reveal onSubmit={onSubmit} noValidate className="flex flex-col gap-8 md:gap-10">
             <div>
-              <p className="font-pixel text-xs text-muted-foreground">send a message</p>
+              <p className="font-pixel text-xs tracking-wide text-muted-foreground">send a message</p>
               <h2 className="mt-3 font-display font-soft text-[clamp(2.25rem,5vw,4rem)] leading-[0.95] tracking-[-0.04em] text-foreground">
                 tell me what you&rsquo;re building
               </h2>
             </div>
 
-            <Line n="01" label="name">
-              <input
+            <div className="flex flex-col gap-1">
+              <label htmlFor="c-name" className="font-pixel text-xs text-muted-foreground">
+                name
+              </label>
+              <Input
+                id="c-name"
                 name="name"
                 type="text"
                 autoComplete="name"
                 value={fName}
                 onChange={(e) => setFName(e.target.value)}
                 placeholder="your name"
-                className={input}
+                className={`${field} bg-secondary`}
               />
-            </Line>
+            </div>
 
-            <Line n="02" label="email">
-              <input
+            <div className="flex flex-col gap-1">
+              <label htmlFor="c-email" className="font-pixel text-xs text-muted-foreground">
+                email
+              </label>
+              <Input
+                id="c-email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 value={fEmail}
                 onChange={(e) => setFEmail(e.target.value)}
                 placeholder="you@email.com"
-                className={input}
+                className={`${field} bg-secondary`}
               />
-            </Line>
+            </div>
 
             <fieldset className="min-w-0">
-              <legend className="flex items-baseline gap-3 font-pixel text-xs text-muted-foreground">
-                <span className="tabular-nums">03</span>what&rsquo;s it about
+              <legend className="font-pixel text-xs text-muted-foreground">
+                what&rsquo;s it about
               </legend>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-3 flex flex-wrap gap-2">
                 {TOPICS.map((tp) => {
                   const on = topic === tp;
                   return (
@@ -719,7 +712,9 @@ export default function ContactPage() {
                       aria-pressed={on}
                       onClick={() => setTopic(tp)}
                       className={`h-10 rounded-full px-5 font-pixel text-xs transition-colors duration-200 ${focus} ${
-                        on ? 'bg-foreground text-background' : 'bg-muted text-foreground hover:bg-primary hover:text-primary-foreground'
+                        on
+                          ? 'bg-foreground text-background'
+                          : 'bg-muted text-foreground hover:bg-primary hover:text-primary-foreground'
                       }`}
                     >
                       {tp}
@@ -729,8 +724,12 @@ export default function ContactPage() {
               </div>
             </fieldset>
 
-            <Line n="04" label="message">
-              <textarea
+            <div className="flex flex-col gap-1">
+              <label htmlFor="c-msg" className="font-pixel text-xs text-muted-foreground">
+                message
+              </label>
+              <Textarea
+                id="c-msg"
                 name="message"
                 rows={4}
                 value={fMsg}
@@ -739,18 +738,43 @@ export default function ContactPage() {
                   if (formState !== 'idle') setFormState('idle');
                 }}
                 placeholder="tell me about the project"
-                className={`${input} resize-none !text-xl md:!text-2xl`}
+                className={`${field} min-h-0 resize-none bg-secondary`}
               />
-            </Line>
+            </div>
 
             <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+              {/* Send button as a cartoon signpost board */}
               <button
                 type="submit"
-                className={`group flex items-center gap-5 rounded-full bg-foreground py-2 pl-7 pr-2 text-background transition-colors duration-300 hover:bg-primary hover:text-primary-foreground active:scale-[0.98] ${focus}`}
+                className={`group relative inline-flex items-center gap-3 rounded-md border-[2.5px] bg-[#c98d51] py-2 pl-5 pr-2 font-pixel text-xs text-[#2a1608] transition-transform duration-150 ease-[cubic-bezier(0.19,1,0.22,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 ${focus}`}
+                style={{
+                  borderColor: INK,
+                  backgroundImage: GRAIN,
+                  backgroundSize: '260px 100px',
+                  boxShadow: `4px 4px 0 ${INK}`,
+                }}
               >
-                <span className="font-pixel text-sm">send message</span>
-                <span className="grid size-11 place-items-center rounded-full bg-background text-foreground transition-all duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:rotate-45 group-hover:bg-foreground group-hover:text-background">
-                  <ArrowUpRight size={18} strokeWidth={1.75} aria-hidden />
+                {/* Top edge highlight */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-[4px] bg-[#efc18a]"
+                />
+                {/* Bottom edge shadow */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-x-0 bottom-0 h-1 rounded-b-[4px] bg-[#93582a]"
+                />
+                {/* Label */}
+                <span className="relative [text-shadow:0_1px_0_#efc18a]">
+                  {formState === 'sent' ? 'sent!' : 'send message'}
+                </span>
+                {/* Arrow chip */}
+                <span
+                  aria-hidden
+                  className="relative grid size-8 place-items-center rounded-full border-2 bg-[#c98d51] text-[#2a1608] transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:rotate-45"
+                  style={{ borderColor: INK }}
+                >
+                  <ArrowUpRight size={14} strokeWidth={2} aria-hidden />
                 </span>
               </button>
               <p aria-live="polite" className="font-pixel text-xs text-muted-foreground">
@@ -838,7 +862,11 @@ export default function ContactPage() {
               }}
               className={`grid size-10 place-items-center rounded-full bg-muted text-foreground transition-colors duration-200 hover:bg-foreground hover:text-background ${focus}`}
             >
-              {sound ? <Volume2 size={15} strokeWidth={1.5} aria-hidden /> : <VolumeX size={15} strokeWidth={1.5} aria-hidden />}
+              {sound ? (
+                <Volume2 size={15} strokeWidth={1.5} aria-hidden />
+              ) : (
+                <VolumeX size={15} strokeWidth={1.5} aria-hidden />
+              )}
             </button>
           </div>
         </div>
@@ -891,7 +919,13 @@ export default function ContactPage() {
                 {[0, 1, 2, 3].map((i) => (
                   <rect key={i} x="150" y={440 + i * 22} width="110" height="9" rx="4.5" className="fill-foreground" />
                 ))}
-                <circle cx="900" cy="474" r="18" strokeWidth="3" className={`stroke-foreground transition-colors duration-300 ${off ? 'fill-card' : 'fill-foreground'}`} />
+                <circle
+                  cx="900"
+                  cy="474"
+                  r="18"
+                  strokeWidth="3"
+                  className={`stroke-foreground transition-colors duration-300 ${off ? 'fill-card' : 'fill-foreground'}`}
+                />
                 <circle cx="900" cy="474" r="6" className="fill-primary" />
                 <text x="900" y="522" textAnchor="middle" dominantBaseline="central" fontSize="18" className="fill-primary-foreground font-pixel">
                   line
@@ -902,15 +936,7 @@ export default function ContactPage() {
                 {DIGITS.map((d) => {
                   const p = polar(R_HOLES, holeAngle(d));
                   return (
-                    <text
-                      key={d}
-                      x={p.x}
-                      y={p.y}
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      fontSize="40"
-                      className="fill-card font-pixel"
-                    >
+                    <text key={d} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="40" className="fill-card font-pixel">
                       {d}
                     </text>
                   );

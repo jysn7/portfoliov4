@@ -42,6 +42,15 @@ const chipBase =
   'block rounded-lg border-[1.5px] border-foreground font-pixel text-[#000203] shadow-[2px_2px_0_var(--foreground)] transition-shadow duration-200 hover:shadow-[4px_5px_0_var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground';
 const chipPressed = 'shadow-none hover:shadow-none translate-x-[2px] translate-y-[2px]';
 
+// Wood tokens — shared with the signpost boards on the contact page
+const WOOD = {
+  ink: '#2a1608',
+  tone: '#c98d51',
+  highlight: '#efc18a',
+  shadow: '#93582a',
+  grain: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='100' viewBox='0 0 260 100'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cg stroke='%23b27237' stroke-width='2.5'%3E%3Cpath d='M0 16 C40 8 70 24 120 16 S200 8 260 16'/%3E%3Cpath d='M0 42 C50 50 90 34 140 42 S220 50 260 42'/%3E%3Cpath d='M0 68 C30 60 80 76 130 68 S210 60 260 68'/%3E%3Cpath d='M0 90 C60 96 100 84 150 90 S230 96 260 90'/%3E%3C/g%3E%3Cg stroke='%23d9a265' stroke-width='2'%3E%3Cpath d='M20 29 C60 23 90 35 130 29'/%3E%3Cpath d='M150 56 C190 50 220 62 250 56'/%3E%3Cpath d='M10 79 C40 75 70 83 100 79'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+};
+
 export default function Navbar() {
   const pathname = usePathname();
   const { setTheme, resolvedTheme } = useTheme();
@@ -63,7 +72,7 @@ export default function Navbar() {
   const isDark = mounted && resolvedTheme === 'dark';
 
   // ---------------------------------------------------------------------------
-  // Entrance: logo tile spins in, greeting types, chips drop in with a bounce
+  // Entrance: logo spins in, greeting types, chips drop in with a bounce
   // ---------------------------------------------------------------------------
   useIsoLayoutEffect(() => {
     setMounted(true);
@@ -71,7 +80,6 @@ export default function Navbar() {
     if (!header) return;
 
     const ctx = gsap.context(() => {
-      // caret blink (kept even for reduced motion; it is tiny and slow)
       gsap
         .timeline({ repeat: -1 })
         .set(caretRef.current, { opacity: 0 }, 0.55)
@@ -95,7 +103,7 @@ export default function Navbar() {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Scroll: glass background after a few px, hide on scroll down, show on up
+  // Scroll: glass background, hide on scroll down, show on up
   // ---------------------------------------------------------------------------
   useEffect(() => {
     let lastY = window.scrollY;
@@ -124,7 +132,7 @@ export default function Navbar() {
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Theme switch: knob slides with a squash, icon spins in
+  // Wooden switch: knob slides with a squash, icon spins in
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (!mounted || !knobRef.current) return;
@@ -225,17 +233,18 @@ export default function Navbar() {
       }`}
     >
       <nav aria-label="Primary" className="mx-auto flex h-16 w-full max-w-360 items-center justify-between gap-4 px-5 md:px-10">
-        {/* Logo: pixel J tile + greeting */}
+        {/* Logo: pixel J + greeting — no bordered tile */}
         <Link
           href="/"
           aria-label="Jayson Baloyi, home"
           onPointerEnter={wiggleLogo}
-          className="group flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
+          className="group flex items-center gap-2.5 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
         >
           <span
             ref={logoTileRef}
             data-logo-tile
-            className="flex h-9 w-9 items-center justify-center rounded-lg border-[1.5px] border-foreground bg-primary text-[#000203] shadow-[2px_2px_0_var(--foreground)]"
+            className="inline-flex text-primary"
+            style={{ filter: `drop-shadow(2px 2px 0 ${WOOD.ink})` }}
           >
             <PixelJ />
           </span>
@@ -274,7 +283,7 @@ export default function Navbar() {
             })}
           </ul>
 
-          {/* Light / dark switch */}
+          {/* Wooden light / dark switch */}
           <button
             data-switch
             role="switch"
@@ -284,14 +293,33 @@ export default function Navbar() {
             onPointerDown={(e) => press(e.currentTarget)}
             onPointerUp={(e) => release(e.currentTarget)}
             onPointerLeave={(e) => release(e.currentTarget)}
-            className="relative h-8 w-14 shrink-0 rounded-lg border-[1.5px] border-foreground bg-card shadow-[2px_2px_0_var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
+            className="relative h-8 w-14 shrink-0 overflow-hidden rounded-md border-[2.5px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
+            style={{
+              borderColor: WOOD.ink,
+              background: WOOD.tone,
+              backgroundImage: WOOD.grain,
+              backgroundSize: '260px 100px',
+              boxShadow: `2px 2px 0 ${WOOD.ink}`,
+            }}
           >
+            {/* Wood edge strips */}
+            <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px]" style={{ background: WOOD.highlight }} />
+            <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px]" style={{ background: WOOD.shadow }} />
+
+            {/* Knob */}
             <span
               ref={knobRef}
-              className="absolute left-0.5 top-[2.5px] flex h-6 w-6 items-center justify-center rounded-md border-[1.5px] border-foreground bg-primary text-[#000203]"
+              className="absolute left-[3px] top-[3px] flex h-[22px] w-[22px] items-center justify-center rounded-sm border-[2px] text-[#2a1608]"
+              style={{
+                borderColor: WOOD.ink,
+                background: WOOD.tone,
+                backgroundImage: WOOD.grain,
+                backgroundSize: '80px 40px',
+                boxShadow: `1px 1px 0 ${WOOD.ink}`,
+              }}
             >
               <span ref={knobIconRef} className="inline-flex">
-                {mounted ? isDark ? <Moon size={12} /> : <Sun size={12} /> : null}
+                {mounted ? isDark ? <Moon size={11} strokeWidth={2.25} /> : <Sun size={11} strokeWidth={2.25} /> : null}
               </span>
             </span>
           </button>
@@ -306,22 +334,27 @@ export default function Navbar() {
             onPointerDown={(e) => press(e.currentTarget)}
             onPointerUp={(e) => release(e.currentTarget)}
             onPointerLeave={(e) => release(e.currentTarget)}
-            className={`${chipBase} bg-foreground px-3 py-1 text-sm !text-background md:hidden ${menuOpen ? chipPressed : ''}`}
+            className={`${chipBase} bg-foreground px-3.5 py-1 text-sm !text-background md:hidden ${menuOpen ? chipPressed : ''}`}
           >
             {menuOpen ? 'close' : 'menu'}
           </button>
         </div>
       </nav>
 
-      {/* Mobile panel */}
+      {/* Mobile panel — wider, better spacing, tap-friendly */}
       <div
         ref={panelRef}
         id="mobile-nav"
         aria-hidden={!menuOpen}
-        className="invisible absolute right-5 top-full mt-2 w-48 rounded-xl border-[1.5px] border-foreground bg-background p-3 shadow-[4px_4px_0_var(--primary)] md:hidden"
+        className="invisible absolute inset-x-4 top-full mt-2 origin-top-right overflow-hidden rounded-2xl border-[2px] md:hidden"
+        style={{
+          borderColor: WOOD.ink,
+          background: 'var(--background)',
+          boxShadow: `5px 5px 0 ${WOOD.ink}`,
+        }}
       >
-        <ul className="flex flex-col gap-2.5">
-          {NAV.map((item) => {
+        <ul className="flex flex-col gap-2.5 p-3.5">
+          {NAV.map((item, i) => {
             const active = pathname === item.href;
             return (
               <li key={item.name} data-m-item>
@@ -330,15 +363,25 @@ export default function Navbar() {
                   tabIndex={menuOpen ? 0 : -1}
                   aria-current={active ? 'page' : undefined}
                   onClick={() => setMenuOpen(false)}
-                  className={`${chipBase} px-3 py-2 text-base ${active ? chipPressed : ''}`}
+                  className={`${chipBase} flex items-center justify-between px-4 py-3 text-base ${active ? chipPressed : ''}`}
                   style={{ background: item.bg }}
                 >
-                  {item.name}
+                  <span>{item.name}</span>
+                  {active && (
+                    <span className="font-pixel text-[10px] tracking-wide opacity-70">here</span>
+                  )}
                 </Link>
               </li>
             );
           })}
         </ul>
+
+        {/* Small footer note inside the panel */}
+        <div className="border-t border-foreground/20 px-4 py-2.5">
+          <p className="font-pixel text-[10px] tracking-wide text-muted-foreground">
+            johannesburg · {new Date().getFullYear()}
+          </p>
+        </div>
       </div>
     </header>
   );

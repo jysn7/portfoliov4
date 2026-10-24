@@ -3,19 +3,31 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 
-const COLS = 60;
-const ROWS = 32; // ~1.875 ratio: at 68rem wide the canvas is ~36rem tall, same as your original height
+const COLS = 96;
+const ROWS = 72;
 const ERASER = -1;
 const MAX_HISTORY = 60;
 const NAME = 'Jayson Baloyi';
 
-// 0 and 1 follow your theme tokens, the rest are fixed accents (unchanged)
+// Distance from the centre to a corner, so the intro bloom always covers the whole picture
+const REVEAL = Math.ceil(Math.hypot(COLS / 2, (ROWS / 2) * 1.2)) + 6;
+
+// 13 colours sampled from Van Gogh's The Starry Night (1889), dark to light.
+// Keys 1-9 pick the first nine, 0 picks the tenth; the last three are click-only.
 const SWATCHES = [
-  { name: 'amber', css: 'var(--primary)' },
-  { name: 'ink', css: 'var(--foreground)' },
-  { name: 'sky', css: '#8FB8FF' },
-  { name: 'rose', css: '#FF8FA3' },
-  { name: 'mint', css: '#7ED492' },
+  { name: 'cypress black', css: '#1D1E1D' },
+  { name: 'night navy', css: '#293861' },
+  { name: 'deep blue', css: '#243784' },
+  { name: 'cypress green', css: '#3C433B' },
+  { name: 'ultramarine', css: '#1F37A6' },
+  { name: 'cobalt', css: '#1C35C2' },
+  { name: 'royal blue', css: '#325BC1' },
+  { name: 'cerulean', css: '#3F69B6' },
+  { name: 'sky blue', css: '#5680B4' },
+  { name: 'mist', css: '#7394A1' },
+  { name: 'pale sage', css: '#9DAF7D' },
+  { name: 'moon gold', css: '#D4A610' },
+  { name: 'star glow', css: '#C5C55C' },
 ] as const;
 
 const GRID_LINES =
@@ -27,9 +39,6 @@ type Tool = 'pencil' | 'eraser' | 'fill' | 'picker';
 type Settings = { tool: Tool; color: number; size: number; mirror: boolean };
 type Actions = { undo: () => void; redo: () => void; clear: () => void; reset: () => void; save: () => void };
 
-/* ------------------------------------------------------------------ */
-/* Icons (24px stroke set, inlined so there's no extra dependency)      */
-/* ------------------------------------------------------------------ */
 const ICONS = {
   pencil: ['M12 20h9', 'M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z'],
   eraser: [
@@ -102,51 +111,93 @@ const SIZES = [
 ] as const;
 
 /* ------------------------------------------------------------------ */
-/* Starting picture: a simple sunset over hills.                        */
-/* Every cell is painted, so the picture fills the whole canvas.        */
+/* The picture: The Starry Night, sampled from the painting itself,    */
+/* reduced to a 96x72 grid and 13 colours (error-diffused for a        */
+/* painterly grain). One character per cell, base-36 palette index.    */
+/* The steeple, church and lit windows are drawn in by hand because    */
+/* they are too small to survive sampling.                             */
 /* ------------------------------------------------------------------ */
+const SCENE_ROWS = [
+  '1318118a989180181118811122472649a962622646887297176674142111142162224268272287889899278877792411',
+  '111248799aaa971122429991222477a999a8672717297a98717161452424227712661172762627217877827722222777',
+  '4722289abbca892254299b98221251aac999624478839766876944568983747886682772787281972222979999676444',
+  '4224488abbb9a6425248899942444999ca981aaa972781882645567777189147767417712271789877799aaaaaa99877',
+  '2122299aacc99844422413112822289989188aaaa758221144424589aaa99867272486612778271679aacaaa9aaa8777',
+  '22223788a99998545114442777245879a9876aaca96467452445548cacac9c76476472217766119a99aaaacccaaa99cc',
+  '7116558788889446500554442222262452254891325472477624298aacbaa974774621227676299aaaacccccccaac899',
+  '72346746669645466002542554724676554554455444467422262889aacaa9a4414126276678789aaacccacccaacaa99',
+  '7152242724552724400544545546244542756555644272145542479a9993999221417227677899aacacccbbbbcaaa888',
+  '821228455667442460359932446452427642211247255741424252699998982622221216778899aaacccbbcaccc9a999',
+  '975345665555224470193aaaa5444466417117781131937184744424889746222626442646689aaccccbbccccccaaa99',
+  '9856674464564544103a9ac9c2546664328777667888819124374444712777727665554768688aacccbbbcccccaacaaa',
+  '89624476581674671089abbba7645214767878889998898989899814267712166847867267898accacbbbccccccaa988',
+  '9377666446677425108cabbaa54426676781789aaa99899977888888841228678999997676779aacccbbbbccccccac99',
+  '8387476467225444207accaaa65278787888acaa312199998986988997741188aa9899968668aaacccbbbbbccccbaa99',
+  '9839744472682266104676865562878889879998899aa3987678677996812429aa9aa988566699cacccbbbbbbbbb9a99',
+  '988a84122746564410455456228887998818aa97788777889994878988984269aaaca998676688aaacccbbbbbbbaaa99',
+  '9889986921266444602769788986799889aa99977773171887a8627798792469a9ab9a9a67769799ccccccbcccaa9a99',
+  '8887a3998222245420386898877aa99783898722686764889498872619797664a999999977766a778caccccccccac988',
+  '87898a989998867883099787889998788997112674278868188998887499676799a99989676569998aacaacccaaa9977',
+  '99769993999999987900998889998778981212784a827887868879798529666677687868687559669aaaaccaaa9a9788',
+  '89786998983999887300988999a6799a7211878899897778789179688826274776774887877762a78a9989a889878877',
+  '89a87488888777889300388998778aaaa7178998889988688886888a8818286727664667887787698776789998888877',
+  '88999927886999883000389879999abaa7187979988a8887898789898987128776776688874768657788896777778988',
+  '8a989893178993983000388899649aca9888688788799797878889798894118611777888817776878678667921988877',
+  '879988889988898830303899812889aa9677788887789987749898898988877766777777787787877866888888888766',
+  '9a98999978999398303039628717188767889878868288877977889897249661333368478797797767766667723268aa',
+  '979a89889988890830003628720267281887997888728888479889877469999a99972987878987778778777767789aaa',
+  '188889999888890330033788711181277778998989862878987878989787899899999788787779887887878988accaaa',
+  '7267899889988900030306818118118768698887a8991786877898774899a9997788998887777787887678999aca99aa',
+  '7488787888877100000001871777127668788886979982822787247289a888781887489789688888668899aaaaa9a9aa',
+  '179a99227677910000030111177777726777888978999987812267899999867869246887897887868ac999aaaaca9a99',
+  '77aaa86768acaa003000008228776678998888789978977788a87697784678787978798886977789aaaaacaaaaaa9999',
+  '27caa8876aaaca0000003097888888999999897788998898888999898467879a867999798637778aa9caa9a9aaa99aaa',
+  '178988777aaaca300000003318789aa9a9a899778778987799998774782879a78697899886777aaa9aa99aaaa99999aa',
+  '767667778aaaaa33000003188779a9aaaa9a9a76772789897986276998788888788788987626a9aa9a99a999a99aa999',
+  '8688777768caca3000000037788a9aaaaaaaa99767879874125477718877986976788998726aa9aaa9a9998999a99199',
+  '7722278788899800000000177889aaaaabaaaa9922111898877779827882798899989898419aaaaaaa8a78a933300000',
+  '72889717746663030003003777999aaacbaa9999875771745767782287888897788889848aaa99aa9999889900001100',
+  '81176127767860000000303781199aaa9caaaa8988797887888777871178899874628789a9a9a9aaa888998930011122',
+  '81678998627673000000000778189a9aa999a9987879878788881288a889aaaaaaaaaa9a999aa99a7a99310100010011',
+  '712aa9982418600030000308888899a9aaaa999877774787988769aa9a9999a9aa9aa9aa9aa9c989998a142201112100',
+  'acaa9ac985467300000000093183899a99999868989aa9aaaa789caaaaa9999a9988898999887899a9a3112101120200',
+  'aa9899aa8976800000000001189169a8998969baa9a999aaaa999aaa9999a99999999999998999932112212000010111',
+  '9a8889aaaa9870000000303337137767778acaaa9a99aa99a9aaaa97298989999a9aa999978141112221138886878755',
+  'aa8889a99a9993000300000337308899aac9a99aaa9987989a9999287789311110096546810242000202666898684866',
+  '98889899aa9a9300000000330100399999999998988898aa978799a98322427112221188100110111178777676687822',
+  '9989a7889987610000030003080009999999982788819888877881a24211421221211010103126555666884886888866',
+  'a887789879899300000030300100003999a8778888897717899989a57247222121100452465567757686678797777766',
+  '824279899878780000003030380000038217988913118899887121a22271814421024576767766766778878977787666',
+  '981658987998890003003030009030001178783242120188112168a42712115210476267677164566686676766771766',
+  '199989777629980300000030001000000367125541221221224262a6462219107665297817931778029998988773a311',
+  '121197789876680030000000000300000004542442242122416776a982111246615113719188938991399939a3333933',
+  '001145525542110030000000000030000003000002219112101221a9422442744493013330010111933a9133a989a933',
+  '313002111100030000300000000000300300100110111993990271a999982191198211303aa333333a22aaa81a3a3a33',
+  '111312011002000000000000300000000000223200330188117171a9887989998119389993489a3651321928aa3137aa',
+  '312103140313000300030000003000300030112009882411017119a99119111211001111311189117919991191799100',
+  '00012111342030000000000000300000003011009619171111a21a999118181117191100100131211131898891939900',
+  '1101441004100033003303003300000000003036161221319aaa1a999210881778811211081181388887199890113999',
+  '23133013121300300003000003000030000000033003010999999a9991108631001013b1300211111193310033977933',
+  '33133a311130300000003000000030000000001103310003a9999a909190110131011011818111111899910983133322',
+  '3333114212130000000300000000000300000031000113b9a9999a90946301003b188399991011000217710000110111',
+  '100031111110030000300000000300000000000011110039a9099a9091100000331110337a7c30303131100319111000',
+  '131111399333000000000000030030000030000003110013a9099a9990330100011000087b13b9981333077271999888',
+  '111321030333333000000300000330003003000003031331333333333330101100001131311039991901880399301177',
+  '111110331333000000000000000030000001000000003000039333000031113330011219a2311aca39019a3339112711',
+  '0100333a3133000000000000000030000000000300003030381113133c303000000018181173221301013b0333033333',
+  '13333333a033300000030000000000000000000000000333000000330ab3331993030101013121209899183010333100',
+  '13023a03aa33103300003000003000000000000330001111113313330033331333339389901113218878893033003311',
+  '301313030333333100000000030000000000000000003933133331030003333333338911191271130212211333313300',
+  '100c0a330213103000000330000300000030000003000103333339000030300339999999038311110000000030303333',
+  '3a33aaa3913a3ac330000330303303003330300030033311111111113390993333111112339011003330331033331333',
+];
+
 function buildScene(): Int8Array {
-  const g = new Int8Array(COLS * ROWS).fill(2); // sky everywhere
-  const set = (c: number, r: number, v: number) => {
-    c = Math.round(c);
-    r = Math.round(r);
-    if (c >= 0 && c < COLS && r >= 0 && r < ROWS) g[r * COLS + c] = v;
-  };
-  const bayer = [
-    [0, 2],
-    [3, 1],
-  ];
-  const checker = (c: number, r: number) => (c + r) % 2 === 0;
-  const backTop = (c: number) => 21 + 1.6 * Math.sin(c * 0.2 + 3);
-  const frontTop = (c: number) => 24.5 + 2 * Math.sin(c * 0.13 + 0.9);
-
-  // sunset glow: rose dithers in from the sky, then goes solid at the horizon
+  const g = new Int8Array(COLS * ROWS).fill(ERASER);
   for (let r = 0; r < ROWS; r++) {
-    const t = Math.min(Math.max((r - 11) / 8, 0), 1);
-    for (let c = 0; c < COLS; c++) if (bayer[r % 2][c % 2] < t * 4) set(c, r, 3);
+    const row = SCENE_ROWS[r];
+    for (let c = 0; c < COLS; c++) g[r * COLS + c] = parseInt(row[c], 36);
   }
-
-  // sun
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++) if ((c - 43) ** 2 + (r - 19) ** 2 <= 42) set(c, r, 0);
-
-  // gulls
-  for (const [c, r] of [
-    [13, 6],
-    [19, 4],
-    [24, 8],
-  ]) {
-    set(c, r, 1);
-    set(c + 1, r + 1, 1);
-    set(c + 2, r, 1);
-  }
-
-  // distant hill (dithered), then the near hill
-  for (let c = 0; c < COLS; c++)
-    for (let r = Math.round(backTop(c)); r < ROWS; r++) if (checker(c, r)) set(c, r, 4);
-  for (let c = 0; c < COLS; c++)
-    for (let r = Math.round(frontTop(c)); r < ROWS; r++) set(c, r, 4);
-
   return g;
 }
 
@@ -160,8 +211,6 @@ const easeOutBack = (t: number) => {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/* ------------------------------------------------------------------ */
-
 export default function Hero() {
   const rootRef = useRef<HTMLElement>(null);
   const windowRef = useRef<HTMLDivElement>(null);
@@ -171,7 +220,7 @@ export default function Hero() {
   const coordRef = useRef<HTMLSpanElement>(null);
   const caretRef = useRef<HTMLSpanElement>(null);
 
-  const settings = useRef<Settings>({ tool: 'pencil', color: 0, size: 1, mirror: false });
+  const settings = useRef<Settings>({ tool: 'pencil', color: 11, size: 1, mirror: false });
   const actions = useRef<Actions>({ undo() {}, redo() {}, clear() {}, reset() {}, save() {} });
 
   const [ui, setUi] = useState<Settings>(settings.current);
@@ -193,13 +242,12 @@ export default function Hero() {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const hasRound = typeof ctx.roundRect === 'function';
 
-    // ---------- state ----------
     const cells = SCENE.slice();
-    const lift = new Float32Array(COLS * ROWS); // smoothed per-cell bump
+    const lift = new Float32Array(COLS * ROWS);
     const tgt = { x: -99, y: -99 };
     const ptr = { x: -99, y: -99, on: false };
     const hover = { c: -1, r: -1 };
-    const reveal = { r: reduced ? 80 : 0 };
+    const reveal = { r: reduced ? REVEAL : 0 };
     const scan = { x: -6 };
     const ripples: { c: number; r: number; t: number }[] = [];
     let down = false;
@@ -207,7 +255,6 @@ export default function Hero() {
     let visible = true;
     let inside = false;
 
-    // ---------- history ----------
     const undoStack: Int8Array[] = [];
     const redoStack: Int8Array[] = [];
     let needSnap = false;
@@ -221,16 +268,13 @@ export default function Hero() {
       syncHist();
     };
 
-    // ---------- colours (follow the theme) ----------
     let colors: string[] = [];
     let dotColor = '#71717a';
     let inkColor = '#888';
     const readColors = () => {
       const cs = getComputedStyle(document.documentElement);
       const tok = (n: string, fb: string) => cs.getPropertyValue(n).trim() || fb;
-      colors = SWATCHES.map((s) =>
-        s.css.startsWith('var(') ? tok(s.css.slice(4, -1), '#ffb800') : s.css
-      );
+      colors = SWATCHES.map((s) => s.css);
       dotColor = tok('--muted-foreground', '#71717a');
       inkColor = tok('--foreground', '#888');
     };
@@ -238,7 +282,6 @@ export default function Hero() {
     const themeObserver = new MutationObserver(readColors);
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-    // ---------- sizing ----------
     let W = 0;
     let H = 0;
     let cell = 0;
@@ -259,7 +302,6 @@ export default function Hero() {
     const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
     io.observe(canvas);
 
-    // ---------- drawing primitives ----------
     const fillBox = (x: number, y: number, w: number, h: number, r: number) => {
       if (hasRound) {
         ctx.beginPath();
@@ -274,7 +316,6 @@ export default function Hero() {
       ctx.stroke();
     };
 
-    // ---------- editing ----------
     const updateCount = () => {
       let n = 0;
       for (const v of cells) if (v >= 0) n++;
@@ -282,7 +323,6 @@ export default function Hero() {
     };
     updateCount();
 
-    /** every write goes through here so history + bounce stay consistent */
     const write = (i: number, v: number, bump = 0.9) => {
       if (cells[i] === v) return false;
       if (needSnap) {
@@ -341,7 +381,6 @@ export default function Hero() {
       updateCount();
     };
 
-    /** left-to-right wipe to blank (clear) or back to the starting scene (reset) */
     const applyWipe = (upTo: number, target: Int8Array | null) => {
       for (let r = 0; r < ROWS; r++)
         for (let c = 0; c <= upTo && c < COLS; c++) {
@@ -376,7 +415,7 @@ export default function Hero() {
     };
 
     const save = () => {
-      const scale = 20;
+      const scale = 12;
       const out = document.createElement('canvas');
       out.width = COLS * scale;
       out.height = ROWS * scale;
@@ -395,7 +434,7 @@ export default function Hero() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'untitled.png';
+        a.download = 'starry-night.png';
         a.click();
         URL.revokeObjectURL(url);
       });
@@ -409,7 +448,6 @@ export default function Hero() {
       save,
     };
 
-    // ---------- pointer ----------
     const locate = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
       const fx = ((e.clientX - rect.left) / rect.width) * COLS;
@@ -483,7 +521,6 @@ export default function Hero() {
     canvas.addEventListener('pointerup', onUp);
     canvas.addEventListener('pointercancel', onUp);
 
-    // ---------- keyboard (only while the hero is hovered or focused) ----------
     const enter = () => (inside = true);
     const leave = () => (inside = false);
     root.addEventListener('mouseenter', enter);
@@ -511,9 +548,11 @@ export default function Hero() {
       if (mod || e.altKey) return;
 
       if (TOOL_KEYS[k]) return update({ tool: TOOL_KEYS[k] });
-      if (k >= '1' && k <= '5') {
+      if (k >= '0' && k <= '9') {
+        const n = k === '0' ? 9 : Number(k) - 1;
+        if (n >= SWATCHES.length) return;
         const cur = settings.current.tool;
-        return update({ color: Number(k) - 1, tool: cur === 'eraser' || cur === 'picker' ? 'pencil' : cur });
+        return update({ color: n, tool: cur === 'eraser' || cur === 'picker' ? 'pencil' : cur });
       }
       if (k === '[') return update({ size: Math.max(1, settings.current.size - 1) });
       if (k === ']') return update({ size: Math.min(3, settings.current.size + 1) });
@@ -521,7 +560,6 @@ export default function Hero() {
     };
     window.addEventListener('keydown', onKey);
 
-    // ---------- render (driven by GSAP's ticker) ----------
     const render = () => {
       if (!visible || !cell) return;
       const now = performance.now() / 1000;
@@ -567,10 +605,10 @@ export default function Hero() {
           const py = (row + 0.5) * cell;
 
           if (v >= 0) {
-            // slightly oversized so neighbouring cells meet and the picture reads as one image
-            const s = cell * 0.96 * (1 + b * 0.35) * pop;
+            // Cells slightly overlap so the painting reads as one image with no seams
+            const s = cell * 1.04 * (1 + b * 0.35) * pop;
             ctx.fillStyle = colors[v];
-            fillBox(px - s / 2, py - b * cell * 0.1 - s / 2, s, s, s * 0.2);
+            fillBox(px - s / 2, py - b * cell * 0.1 - s / 2, s, s, s * 0.1);
           } else {
             const s = cell * (0.12 + b * 0.2) * pop;
             ctx.globalAlpha = 0.5;
@@ -583,7 +621,6 @@ export default function Hero() {
 
       const st = settings.current;
 
-      // symmetry guide
       if (st.mirror) {
         ctx.save();
         ctx.setLineDash([4, 6]);
@@ -597,7 +634,6 @@ export default function Hero() {
         ctx.restore();
       }
 
-      // hovered footprint: outline + ghost of the current colour
       if (ptr.on && hover.c >= 0 && hover.r >= 0) {
         const brush = st.tool === 'pencil' || st.tool === 'eraser';
         const sz = brush ? st.size : 1;
@@ -623,9 +659,7 @@ export default function Hero() {
     };
     gsap.ticker.add(render);
 
-    // ---------- GSAP: one intro moment, glint, caret ----------
     const gsapCtx = gsap.context(() => {
-      // blinking caret
       gsap
         .timeline({ repeat: -1 })
         .set(caretRef.current, { opacity: 0 }, 0.55)
@@ -633,7 +667,6 @@ export default function Hero() {
 
       if (reduced) return;
 
-      // the name rises out of a mask, letter by letter
       gsap.fromTo('[data-char]', { yPercent: 115 }, { yPercent: 0, duration: 1, ease: 'power4.out', stagger: 0.03 });
       gsap.fromTo(
         '[data-in]',
@@ -645,20 +678,17 @@ export default function Hero() {
         { y: 40, opacity: 0 },
         { y: 0, opacity: 1, duration: 1.1, ease: 'power3.out', delay: 0.3 }
       );
-      // pixels bloom outward from the centre
-      gsap.to(reveal, { r: 44, duration: 2.4, ease: 'power2.out', delay: 0.6 });
-      // the hint fades in, then its arrow draws itself
+      gsap.to(reveal, { r: REVEAL, duration: 2.8, ease: 'power2.out', delay: 0.6 });
       gsap.fromTo('[data-hint]', { opacity: 0 }, { opacity: 1, duration: 0.6, delay: 1.6 });
       gsap.fromTo(
         '[data-arrow]',
         { strokeDasharray: 1, strokeDashoffset: 1 },
         { strokeDashoffset: 0, duration: 0.8, ease: 'power2.inOut', stagger: 0.5, delay: 1.8 }
       );
-      // a glint sweeps across every few seconds
       gsap.fromTo(
         scan,
         { x: -6 },
-        { x: COLS + 6, duration: 2.6, ease: 'none', repeat: -1, repeatDelay: 5, delay: 3.8 }
+        { x: COLS + 6, duration: 3, ease: 'none', repeat: -1, repeatDelay: 5, delay: 4 }
       );
     }, root);
 
@@ -682,7 +712,6 @@ export default function Hero() {
     };
   }, [update]);
 
-  // ---------- shared class strings ----------
   const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
   const toolBtn = `grid size-8 shrink-0 place-items-center rounded-lg border-[1.5px] border-transparent text-foreground transition-colors duration-150 hover:border-foreground aria-pressed:border-foreground aria-pressed:bg-foreground aria-pressed:text-background disabled:pointer-events-none disabled:opacity-30 ${focus}`;
   const barBtn =
@@ -694,7 +723,6 @@ export default function Hero() {
       ref={rootRef}
       className="relative flex min-h-screen w-full flex-col items-center overflow-hidden bg-background px-6 pb-24 pt-24 sm:px-10 md:pt-28 lg:px-16"
     >
-      {/* Grid lines: fade out toward the bottom of the section */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
@@ -706,9 +734,8 @@ export default function Hero() {
         }}
       />
 
-      {/* 68rem: a touch wider than the original 64rem */}
-      <div className="relative w-full" style={{ maxWidth: '68rem' }}>
-        {/* Intro: name, then role, then blurb, all stacked */}
+      {/* 64rem keeps the 4:3 painting from getting taller than a laptop screen */}
+      <div className="relative w-full" style={{ maxWidth: '64rem' }}>
         <div className="mb-12 md:mb-14">
           <h1
             aria-label={NAME}
@@ -736,7 +763,6 @@ export default function Hero() {
         </div>
 
         <div className="relative">
-          {/* Hint: lives outside the window and points down at it */}
           <div
             data-hint
             aria-hidden
@@ -749,12 +775,10 @@ export default function Hero() {
             </svg>
           </div>
 
-          {/* Paint window */}
           <div
             ref={windowRef}
             className="relative overflow-hidden rounded-xl border-[1.5px] border-foreground bg-card shadow-[6px_6px_0_var(--primary)]"
           >
-            {/* Title bar */}
             <div className="flex h-10 items-center justify-between border-b-[1.5px] border-foreground bg-primary pl-3 pr-2 font-pixel text-sm text-primary-foreground">
               <span className="flex items-center gap-2.5">
                 <span className="flex gap-1" aria-hidden>
@@ -762,7 +786,7 @@ export default function Hero() {
                     <span key={i} className="size-2.5 rounded-sm border-[1.5px] border-primary-foreground" />
                   ))}
                 </span>
-                untitled.png
+                starry-night.png
               </span>
               <span className="flex items-center gap-1">
                 <span ref={countRef} className="mr-2">
@@ -780,7 +804,6 @@ export default function Hero() {
               </span>
             </div>
 
-            {/* Toolbar (horizontal, so the canvas height is always exactly its aspect ratio) */}
             <div
               role="toolbar"
               aria-label="Tools"
@@ -841,29 +864,28 @@ export default function Hero() {
               </button>
             </div>
 
-            {/* Canvas: width is 100%, height comes purely from the grid ratio, so the picture always fills it */}
             <div ref={wrapRef} className="relative w-full" style={{ aspectRatio: `${COLS} / ${ROWS}` }}>
               <canvas
                 ref={canvasRef}
                 role="img"
-                aria-label="Interactive pixel canvas. Click and drag to draw, use the toolbar above to change brush."
+                aria-label="Interactive pixel canvas of Starry Night. Click and drag to draw, use the toolbar above to change brush."
                 className="absolute inset-0 h-full w-full cursor-crosshair select-none"
                 style={{ touchAction: 'pan-y' }}
               />
             </div>
 
-            {/* Status bar */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t-[1.5px] border-foreground px-3 py-2.5">
-              <div className="flex items-center gap-2" role="group" aria-label="Colour">
+              <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Colour">
                 {SWATCHES.map((s, i) => {
                   const on = ui.color === i && ui.tool !== 'eraser';
+                  const hotkey = i < 9 ? String(i + 1) : i === 9 ? '0' : undefined;
                   return (
                     <button
                       key={s.name}
                       type="button"
-                      title={`${s.name} (${i + 1})`}
+                      title={hotkey ? `${s.name} (${hotkey})` : s.name}
                       aria-label={s.name}
-                      aria-keyshortcuts={String(i + 1)}
+                      aria-keyshortcuts={hotkey}
                       aria-pressed={on}
                       onClick={() =>
                         update({ color: i, tool: ui.tool === 'eraser' || ui.tool === 'picker' ? 'pencil' : ui.tool })

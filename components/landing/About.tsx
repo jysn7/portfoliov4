@@ -98,7 +98,7 @@ export default function AboutPreview() {
     <section
       ref={sectionRef}
       id="about"
-      className="w-full border-t border-border px-6 py-20 sm:px-10 md:py-28 lg:px-16"
+      className="w-full px-6 py-20 sm:px-10 md:py-28 lg:px-16"
     >
       <div className="mx-auto w-full max-w-272">
         <p
