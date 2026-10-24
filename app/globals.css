@@ -82,11 +82,14 @@
   --color-primary: var(--primary);
   --color-cream: var(--cream);
   --color-orange: var(--orange);
-  
+
   /* Font Variables */
   --font-body: var(--font-body);
   --font-heading: var(--font-heading);
   --font-aeonik-air: var(--font-aeonik-air);
+  /* NEW: display serif + pixel face (loaded in layout.tsx) */
+  --font-display: var(--font-fraunces);
+  --font-pixel: var(--font-pixelify);
 
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -119,6 +122,13 @@
     color: var(--foreground);
     font-family: var(--font-body);
     @apply antialiased;
+  }
+}
+
+/* NEW: softer, rounder Fraunces shapes */
+@layer utilities {
+  .font-soft {
+    font-variation-settings: "SOFT" 70;
   }
 }
 

@@ -1,4 +1,4 @@
-import { Montserrat } from "next/font/google";
+import { Montserrat, Fraunces, Pixelify_Sans } from "next/font/google";
 import "./globals.css";
 import Sidebar from "../components/global/Sidebar";
 import Footer from "../components/global/Footer";
@@ -20,6 +20,22 @@ const montserratHeading = Montserrat({
   weight: ["400", "500", "700", "900"],
 });
 
+// Fraunces — display serif (hero name, role line)
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+// Pixelify Sans — pixel face (hero lens, small UI labels)
+const pixelify = Pixelify_Sans({
+  subsets: ["latin"],
+  variable: "--font-pixelify",
+  display: "swap",
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,21 +48,23 @@ export default function RootLayout({
       className={cn(
         "antialiased",
         montserrat.variable,
-        montserratHeading.variable
+        montserratHeading.variable,
+        fraunces.variable,
+        pixelify.variable
       )}
     >
-      <body className="bg-background min-h-screen selection:bg-white/10 font-body">
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {/* Navigation Layer (Fixed/Absolute) */}
-            <Sidebar />
-            <div className="relative z-10 w-full">{children}</div>
-            <Footer />
-          </ThemeProvider>
+      <body className="bg-background min-h-screen selection:bg-primary/30 font-body">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {/* Navigation Layer (Fixed/Absolute) */}
+          <Sidebar />
+          <div className="relative z-10 w-full">{children}</div>
+          <Footer />
+        </ThemeProvider>
       </body>
     </html>
   );

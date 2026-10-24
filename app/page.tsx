@@ -1,15 +1,18 @@
 'use client';
 
-import Hero from '@/components/landing/Hero';
-import About from '@/components/landing/About';
-import Contact from '@/components/landing/Contact';
+import Hero from '../components/landing/Hero';
+import About from '../components/landing/About';
+import Contact from '../components/landing/Contact';
+import Projects from '../components/landing/projects';
+import Signpost from '../components/landing/signpost';
 
 export default function Portfolio() {
   return (
-    <main className="flex-1 w-full max-w-350 mx-auto flex flex-col z-10 relative">
+    <main className="">
       <Hero />
-      <Contact />
       <About />
+      <Projects />
+      <Signpost />
     </main>
   );
 }

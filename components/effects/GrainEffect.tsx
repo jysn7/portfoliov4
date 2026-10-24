@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from "react";
-import { useEffects } from "@/context/EffectContext";
+import { useEffects } from "../../context/EffectContext";
 import gsap from "gsap";
 
 export default function GrainEffect() {

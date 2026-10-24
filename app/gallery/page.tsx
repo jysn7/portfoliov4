@@ -5,7 +5,7 @@ import Image from 'next/image';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Volume2, VolumeX } from 'lucide-react';
-import { projectItems, GalleryItem } from '@/lib/gallery';
+import { projectItems, GalleryItem } from '../../lib/gallery';
 
 gsap.registerPlugin(ScrollTrigger);
 

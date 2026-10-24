@@ -16,7 +16,7 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-background pt-32 pb-12 px-6 md:px-12 border-t border-border mt-40">
+    <footer className="w-full bg-background pt-32 pb-12 px-6 md:px-12 border-t border-border">
       <div className="max-w-350 mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-20">
         
         <div className="flex pl-18 md:pl-0 flex-col gap-2">
