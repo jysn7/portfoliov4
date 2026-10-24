@@ -23,31 +23,31 @@ type Project = {
 // Edit everything here: copy, images, links.
 const PROJECTS: Project[] = [
   {
-    title: 'TYGA',
-    description: 'Management platform for a golf academy, built with the student team I lead.',
-    tags: ['Next.js', 'Supabase'],
-    image: '/works/mira-landscape.png',
+    title: 'SIRL',
+    description: 'An e-commerce storefront for a jewelry brand — product pages, collections, and a checkout flow that feels as considered as the pieces themselves.',
+    tags: ['Next.js', 'Sanity'],
+    image: '/new-work/sirl.png',
     href: '/works',
   },
   {
-    title: 'KITH',
-    description: 'A marketplace where people buy and sell preloved goods directly with each other.',
-    tags: ['PHP', 'MySQL'],
-    image: '/works/mira-landscape.png',
+    title: 'Canvas',
+    description: 'A portfolio site for a painting business, with a gallery that puts the work first and lets the artwork do the talking.',
+    tags: ['Next.js', 'GSAP'],
+    image: '/new-work/canvas.png',
+    href: '/works',
+  },
+  {
+    title: 'Izakhiwo',
+    description: 'A booking and quote site for a roofing and plumbing contractor, built around a clean job-request flow.',
+    tags: ['Next.js', 'Supabase'],
+    image: '/new-work/izakhiwo.png',
     href: '/works',
   },
   {
     title: 'Monostudios',
     description: 'The website for my web studio, with an animated WebGL front end and a CMS behind it.',
     tags: ['GSAP', 'WebGL', 'Payload CMS'],
-    image: '/works/mira-landscape.png',
-    href: '/works',
-  },
-  {
-    title: 'EpiTrace',
-    description: 'A map-based platform for reporting foot-and-mouth disease symptoms, built for a hackathon.',
-    tags: ['GeoTech', 'Hackathon'],
-    image: '/works/mira-landscape.png',
+    image: '/new-work/monos.png',
     href: '/works',
   },
 ];

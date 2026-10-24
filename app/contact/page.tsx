@@ -27,16 +27,13 @@ import {
 /* constants                                                            */
 /* ------------------------------------------------------------------ */
 
-const GRID =
-  'linear-gradient(color-mix(in srgb, var(--foreground) 5%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--foreground) 5%, transparent) 1px, transparent 1px)';
-
 /* signpost board shape (arrow tip depth comes from --tip) */
 const SIGN_R = 'polygon(0 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, 0 100%)';
 
 /* wood: cartoon outline + tileable grain (horizontal for boards, vertical for the post) */
 const INK = '#2a1608';
 const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='100' viewBox='0 0 260 100'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cg stroke='%23b27237' stroke-width='2.5'%3E%3Cpath d='M0 16 C40 8 70 24 120 16 S200 8 260 16'/%3E%3Cpath d='M0 42 C50 50 90 34 140 42 S220 50 260 42'/%3E%3Cpath d='M0 68 C30 60 80 76 130 68 S210 60 260 68'/%3E%3Cpath d='M0 90 C60 96 100 84 150 90 S230 96 260 90'/%3E%3C/g%3E%3Cg stroke='%23d9a265' stroke-width='2'%3E%3Cpath d='M20 29 C60 23 90 35 130 29'/%3E%3Cpath d='M150 56 C190 50 220 62 250 56'/%3E%3Cpath d='M10 79 C40 75 70 83 100 79'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
-const VGRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='200' viewBox='0 0 40 200'%3E%3Cg fill='none' stroke='%23915427' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M10 0 C14 50 6 100 10 150 S14 190 10 200'/%3E%3Cpath d='M28 0 C24 40 32 90 28 140 S24 190 28 200'/%3E%3C/g%3E%3C/svg%3E")`;
+const VGRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='200' viewBox='0 0 40 200'%3E%3Cg fill='none' stroke='%23915427' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M10 0 C14 50 6 100 10 150 S14 190 10 200'/%3E%3Cpath d='M28 0 C24 40 32 90 28 140 S24 190 28 200'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
 
 const LINKS = [
   { label: 'email', icon: Mail, val: 'jysnbly7@gmail.com', href: 'mailto:jysnbly7@gmail.com' },
@@ -48,33 +45,29 @@ const LINKS = [
 
 const TOPICS = ['website', 'game', '3d', 'experiment', 'just saying hi'];
 
-/* ---- phone geometry (SVG units) ----
-   A dome (half circle) whose flat bottom sits exactly on the bottom of the viewBox,
-   so the phone sits flush on the page edge with no gap under it. */
+/* ---- phone geometry (SVG units) ---- */
 const VB = { x: 0, y: -70, w: 1100, h: 770 };
 const CX = 550;
-const BASE = VB.y + VB.h; // 700, the bottom edge of the page
+const BASE = VB.y + VB.h;
 const R_DOME = 520;
-const C = { x: CX, y: 448 }; // dial centre
-const R_PLATE = 205; // finger wheel
-const R_HOLES = 148; // ring the holes sit on
+const C = { x: CX, y: 448 };
+const R_PLATE = 205;
+const R_HOLES = 148;
 const R_HOLE = 31;
-const STOP = 120; // finger stop, degrees clockwise from 12 o'clock
+const STOP = 120;
 const TARGET = '0780345709';
 const DIGITS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
 
-/* handset: an arc lying over the top of the dome */
 const HS_R = 548;
-const HS_A = 50; // angle of each cup from 12 o'clock
-const HS_O = { x: CX, y: 430 }; // pivot when it tilts
+const HS_A = 50;
+const HS_O = { x: CX, y: 430 };
 const HS_ORIGIN = `${HS_O.x} ${HS_O.y}`;
 const HS_LIFT = -80;
 const HS_TILT = -4;
-const CORD_START = { x: 80, y: 430 }; // handset-local anchor (under the left cup)
-const CORD_END = { x: 92, y: 566 }; // where the cord disappears into the body
+const CORD_START = { x: 80, y: 430 };
+const CORD_END = { x: 92, y: 566 };
 
 const toRad = (d: number) => (d * Math.PI) / 180;
-/* point on a circle centred on the dome base, angle clockwise from 12 o'clock */
 const pt = (r: number, a: number) => ({
   x: Number((CX + r * Math.sin(toRad(a))).toFixed(2)),
   y: Number((BASE - r * Math.cos(toRad(a))).toFixed(2)),
@@ -89,8 +82,8 @@ const BODY = `M ${CX - R_DOME} ${BASE} A ${R_DOME} ${R_DOME} 0 0 1 ${CX + R_DOME
 const PLINTH = `M ${CX - R_DOME} ${BASE} V ${BASE - 22} H ${CX + R_DOME} V ${BASE} Z`;
 
 const steps = (d: number) => (d === 0 ? 10 : d);
-const holeAngle = (d: number) => STOP - 30 * steps(d) - 30; // where the hole rests
-const rotNeeded = (d: number) => 30 * steps(d) + 30; // how far to drag it to the stop
+const holeAngle = (d: number) => STOP - 30 * steps(d) - 30;
+const rotNeeded = (d: number) => 30 * steps(d) + 30;
 const polar = (r: number, deg: number) => ({
   x: Number((C.x + r * Math.sin(toRad(deg))).toFixed(2)),
   y: Number((C.y - r * Math.cos(toRad(deg))).toFixed(2)),
@@ -168,7 +161,6 @@ type FormState = 'idle' | 'missing' | 'sent';
 /* small pieces                                                         */
 /* ------------------------------------------------------------------ */
 
-/* one wooden arrow board: outline, grain, bevel bands, nails, optional knot */
 function Board({
   tone,
   className = '',
@@ -212,7 +204,6 @@ function Board({
   );
 }
 
-/* a form row: tiny numbered label, big type, and a line that draws itself on focus */
 function Line({ n, label, children }: { n: string; label: string; children: ReactNode }) {
   return (
     <label className="group relative block">
@@ -243,8 +234,8 @@ export default function ContactPage() {
   const coilRef = useRef<SVGPathElement>(null);
   const padRef = useRef<HTMLDivElement>(null);
 
-  const hs = useRef({ p: 0 }); // handset lift 0..1
-  const rot = useRef({ v: 0 }); // dial rotation in degrees
+  const hs = useRef({ p: 0 });
+  const rot = useRef({ v: 0 });
   const busy = useRef(false);
   const offRef = useRef(false);
   const numRef = useRef('');
@@ -256,7 +247,6 @@ export default function ContactPage() {
   const [sound, setSound] = useState(true);
   const [clock, setClock] = useState('');
 
-  /* form */
   const [fName, setFName] = useState('');
   const [fEmail, setFEmail] = useState('');
   const [fMsg, setFMsg] = useState('');
@@ -272,7 +262,6 @@ export default function ContactPage() {
     sfx.on = sound;
   }, [sound]);
 
-  /* ---------------- intro ---------------- */
   useEffect(() => {
     const ctx = gsap.context(() => {
       if (reduced()) return;
@@ -282,7 +271,6 @@ export default function ContactPage() {
     return () => ctx.revert();
   }, []);
 
-  /* the phone rises into the bottom of the page when you reach it */
   useEffect(() => {
     const el = phoneWrapRef.current;
     const stage = stageRef.current;
@@ -303,7 +291,6 @@ export default function ContactPage() {
     };
   }, []);
 
-  /* johannesburg clock */
   useEffect(() => {
     const fmt = new Intl.DateTimeFormat('en-ZA', {
       hour: '2-digit',
@@ -317,7 +304,6 @@ export default function ContactPage() {
     return () => window.clearInterval(id);
   }, []);
 
-  /* ---------------- form ---------------- */
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!fMsg.trim()) {
@@ -331,7 +317,6 @@ export default function ContactPage() {
     setFormState('sent');
   };
 
-  /* ---------------- phone ---------------- */
   const setPlate = useCallback((v: number) => {
     gsap.set(plateRef.current, { rotation: v, svgOrigin: `${C.x} ${C.y}` });
   }, []);
@@ -364,7 +349,6 @@ export default function ContactPage() {
     setNumber(numRef.current);
   }, []);
 
-  /* the dial winds itself back at a steady speed, clicking as it goes */
   const springBack = useCallback(
     (d: number | null, from: number) => {
       busy.current = true;
@@ -393,7 +377,6 @@ export default function ContactPage() {
     [pushDigit, setPlate]
   );
 
-  /* tap a number (or press a key): the dial turns itself */
   const autoDial = useCallback(
     (d: number) => {
       if (!offRef.current) {
@@ -446,7 +429,6 @@ export default function ContactPage() {
     [applyHandset, setPlate, setSt]
   );
 
-  /* a full number: right one connects, anything else is a wrong number */
   useEffect(() => {
     if (number.length < 10) return;
     if (number === TARGET) {
@@ -473,7 +455,6 @@ export default function ContactPage() {
     return () => window.clearTimeout(id);
   }, [number, setSt, shake]);
 
-  /* drag a finger hole round to the stop */
   const onPadDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     sfx.init();
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -483,7 +464,7 @@ export default function ContactPage() {
     const box = pad.getBoundingClientRect();
     const cx = box.left + box.width / 2;
     const cy = box.top + box.height / 2;
-    const unit = box.width / 2 / R_PLATE; // px per svg unit
+    const unit = box.width / 2 / R_PLATE;
     const toPolar = (x: number, y: number) => ({
       ang: (Math.atan2(x - cx, -(y - cy)) * 180) / Math.PI,
       r: Math.hypot(x - cx, y - cy) / unit,
@@ -533,10 +514,10 @@ export default function ContactPage() {
       window.removeEventListener('pointercancel', up);
       if (!moved) {
         busy.current = false;
-        autoDial(best); // a plain tap dials it for you
+        autoDial(best);
         return;
       }
-      springBack(acc >= limit - 5 ? best : null, acc); // let go early and nothing is dialled
+      springBack(acc >= limit - 5 ? best : null, acc);
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -567,7 +548,6 @@ export default function ContactPage() {
     setNumber('');
   };
 
-  /* ---------------- styles ---------------- */
   const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
   const pill = `flex h-10 items-center gap-1.5 rounded-full px-5 font-pixel text-xs transition-colors duration-200 ${focus}`;
   const pillSoft = `${pill} bg-muted text-foreground hover:bg-foreground hover:text-background`;
@@ -584,39 +564,14 @@ export default function ContactPage() {
 
   return (
     <main ref={scope} className="relative w-full select-none overflow-x-hidden pb-0">
-      {/* ambient light + a grid that fades out, so nothing is cut by a line */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(60rem 38rem at 88% 9rem, color-mix(in srgb, var(--primary) 22%, transparent), transparent 70%), radial-gradient(46rem 34rem at -5% 52rem, color-mix(in srgb, var(--primary) 12%, transparent), transparent 70%)',
-        }}
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-[64rem]"
-        style={{
-          backgroundImage: GRID,
-          backgroundSize: '44px 44px',
-          maskImage: 'radial-gradient(ellipse 70% 60% at 65% 0%, #000, transparent 75%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 65% 0%, #000, transparent 75%)',
-        }}
-      />
-
-      {/* -------------------------------------------------------------- */}
-      {/* Signpost: a wooden post just inside the left edge, boards nailed on */}
-      {/* -------------------------------------------------------------- */}
       <header className="relative z-10 pt-48 md:pt-72">
         <div className="pointer-events-none absolute left-0 top-48 h-[17rem] w-full md:top-72 md:h-[26rem]">
-          {/* the post */}
           <span
             aria-hidden
             className="absolute -top-5 bottom-0 left-0 w-7 rounded-tr-lg border-r-[3px] border-t-[3px] md:w-10"
             style={{ backgroundColor: '#b97c43', backgroundImage: VGRAIN, backgroundSize: '40px 200px', borderColor: INK }}
           />
 
-          {/* board 1 */}
           <div data-board className="absolute left-0 top-10 md:top-16">
             <Board
               tone="#c98d51"
@@ -631,7 +586,6 @@ export default function ContactPage() {
             </Board>
           </div>
 
-          {/* board 2 */}
           <div data-board className="absolute left-0 top-[8.25rem] md:top-[14.5rem]">
             <Board
               tone="#d39a5c"
@@ -645,7 +599,6 @@ export default function ContactPage() {
             </Board>
           </div>
 
-          {/* board 3 */}
           <div data-board className="absolute left-0 top-[11.25rem] md:top-[19.5rem]">
             <Board
               tone="#bd8449"
@@ -660,7 +613,6 @@ export default function ContactPage() {
           </div>
         </div>
 
-        {/* mini paragraph */}
         <div className="mx-auto max-w-350 px-6 pt-[17rem] md:flex md:min-h-[26rem] md:items-end md:justify-end md:px-12 md:pt-0">
           <div data-reveal className="max-w-[34ch] md:pb-4">
             <p className="font-display text-lg italic leading-snug text-foreground md:text-xl">
@@ -674,12 +626,8 @@ export default function ContactPage() {
         </div>
       </header>
 
-      {/* -------------------------------------------------------------- */}
-      {/* Connect + form                                                  */}
-      {/* -------------------------------------------------------------- */}
       <section className="relative z-10 mx-auto mt-20 max-w-350 px-6 md:mt-32 md:px-12">
         <div className="grid gap-16 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-24">
-          {/* left */}
           <div className="flex flex-col gap-14">
             <div data-reveal>
               <p className="mb-5 font-pixel text-xs text-muted-foreground">find me</p>
@@ -725,7 +673,6 @@ export default function ContactPage() {
             </div>
           </div>
 
-          {/* right: just the form, no container */}
           <form data-reveal onSubmit={onSubmit} noValidate className="flex flex-col gap-10 md:gap-12">
             <div>
               <p className="font-pixel text-xs text-muted-foreground">send a message</p>
@@ -818,20 +765,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* -------------------------------------------------------------- */}
-      {/* The phone: a dome sitting flush on the bottom edge of the page   */}
-      {/* -------------------------------------------------------------- */}
       <section ref={stageRef} className="relative z-10 mt-28 md:mt-44">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[44rem]"
-          style={{
-            background:
-              'radial-gradient(52rem 30rem at 50% 100%, color-mix(in srgb, var(--primary) 30%, transparent), transparent 70%)',
-          }}
-        />
-
-        {/* readout */}
         <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-5 px-6 pb-10 text-center md:pb-14">
           <p data-reveal className="flex items-center gap-2 font-pixel text-xs text-muted-foreground">
             {!off && <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-primary" />}
@@ -909,7 +843,6 @@ export default function ContactPage() {
           </div>
         </div>
 
-        {/* phone: the flat bottom of the dome is the bottom of the page */}
         <div className="relative -mb-px flex justify-center overflow-hidden">
           <div
             ref={phoneWrapRef}
@@ -926,10 +859,8 @@ export default function ContactPage() {
               aria-label="A big dome-shaped rotary telephone"
             >
               <g ref={phoneRef}>
-                {/* hard shadow, same language as the rest of the site */}
                 <path d={BODY} transform="translate(14 14)" className="fill-foreground" />
 
-                {/* coiled cord (follows the handset); drawn under the body so its end tucks in */}
                 <path ref={cordRef} d={cordPath(0)} fill="none" strokeWidth="9" strokeLinecap="round" className="stroke-foreground" />
                 <path
                   ref={coilRef}
@@ -940,17 +871,14 @@ export default function ContactPage() {
                   className="stroke-card"
                 />
 
-                {/* dome body + base */}
                 <path d={BODY} strokeWidth="3" className="fill-primary stroke-foreground" />
                 <path d={PLINTH} className="fill-foreground" />
 
-                {/* flat highlights and a rim line, no gradients */}
                 <path d={arc(498, -86, 86)} fill="none" strokeWidth="2" className="stroke-foreground/20" />
                 <path d={arc(478, -74, -34)} fill="none" strokeWidth="12" strokeLinecap="round" className="stroke-background/35" />
                 <circle cx={pt(478, -20).x} cy={pt(478, -20).y} r="6" className="fill-background/35" />
                 <path d={arc(486, 52, 74)} fill="none" strokeWidth="16" strokeLinecap="round" className="stroke-foreground/10" />
 
-                {/* cradle recesses: you see them when the handset is lifted */}
                 {[-HS_A, HS_A].map((a) => {
                   const p = pt(496, a);
                   return (
@@ -960,7 +888,6 @@ export default function ContactPage() {
                   );
                 })}
 
-                {/* speaker slots on the left, a line lamp on the right */}
                 {[0, 1, 2, 3].map((i) => (
                   <rect key={i} x="150" y={440 + i * 22} width="110" height="9" rx="4.5" className="fill-foreground" />
                 ))}
@@ -970,7 +897,6 @@ export default function ContactPage() {
                   line
                 </text>
 
-                {/* dial bezel with a ring of tick marks, and the fixed numbers you see through the holes */}
                 <circle cx={C.x} cy={C.y} r={R_PLATE + 16} className="fill-foreground" />
                 <circle cx={C.x} cy={C.y} r={R_PLATE + 9} fill="none" strokeWidth="5" strokeDasharray="2.4 11" className="stroke-background/30" />
                 {DIGITS.map((d) => {
@@ -990,19 +916,16 @@ export default function ContactPage() {
                   );
                 })}
 
-                {/* the finger wheel */}
                 <g ref={plateRef}>
                   <path d={PLATE_PATH} fillRule="evenodd" strokeWidth="2.5" className="fill-card stroke-foreground" />
                   <circle cx={C.x} cy={C.y} r={R_PLATE - 14} fill="none" strokeWidth="1.5" className="stroke-foreground/20" />
                 </g>
 
-                {/* finger stop */}
                 <g transform={`translate(${polar(R_PLATE + 8, STOP).x} ${polar(R_PLATE + 8, STOP).y}) rotate(${STOP})`}>
                   <rect x="-9" y="-26" width="18" height="52" rx="7" strokeWidth="2.5" className="fill-primary stroke-foreground" />
                   <circle r="3" className="fill-foreground" />
                 </g>
 
-                {/* centre cap */}
                 <circle cx={C.x} cy={C.y} r="66" strokeWidth="2.5" className="fill-primary stroke-foreground" />
                 <circle cx={C.x} cy={C.y} r="54" fill="none" strokeWidth="1.5" className="stroke-foreground/30" />
                 <text x={C.x} y={C.y - 8} textAnchor="middle" dominantBaseline="central" fontSize="22" className="fill-primary-foreground font-pixel">
@@ -1012,7 +935,6 @@ export default function ContactPage() {
                   hi
                 </text>
 
-                {/* handset: an arc lying over the dome, a cup at each end */}
                 <g
                   ref={handsetRef}
                   role="button"
@@ -1040,7 +962,6 @@ export default function ContactPage() {
               </g>
             </svg>
 
-            {/* grab layer for the finger wheel (only this part captures touch) */}
             <div
               ref={padRef}
               aria-hidden

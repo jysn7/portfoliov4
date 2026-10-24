@@ -9,8 +9,8 @@ import gsap from 'gsap';
 
 const NAV = [
   { name: 'home', href: '/', bg: 'var(--primary)' },
-  { name: 'works', href: '/works', bg: '#8FB8FF' },
-  { name: 'gallery', href: '/gallery', bg: '#FF8FA3' },
+  { name: 'about', href: '/about', bg: '#8FB8FF' },
+  { name: 'works', href: '/works', bg: '#FF8FA3' },
   { name: 'contact', href: '/contact', bg: '#7ED492' },
 ];
 
@@ -60,7 +60,7 @@ export default function Navbar() {
   const knobFirst = useRef(true);
   const panelFirst = useRef(true);
 
-  const isDark = mounted && resolvedTheme === 'dark';
+  const isDark = mounted && resolvedTheme === 'light';
 
   // ---------------------------------------------------------------------------
   // Entrance: logo tile spins in, greeting types, chips drop in with a bounce
