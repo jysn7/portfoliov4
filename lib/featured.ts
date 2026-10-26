@@ -118,31 +118,31 @@ export const FEATURED: CaseView[] = [
     category: 'web',
     year: 2024,
     description:
-      'A portfolio site for a painting business, built so the work itself is the only thing competing for attention.',
+      'A painting-focused template built so the artwork is the interface — full-bleed canvases, calm motion, and a CMS that keeps the design locked.',
     tags: ['Next.js', 'GSAP', 'Sanity'],
     image: '/new-work/canvas/canvas-home.png',
 
     role: 'Design & build',
-    client: 'Canvas Studio',
+    client: 'Canvas',
     timeline: '5 weeks',
     status: 'Live',
 
     overview: [
-      'Canvas is a small studio doing commissioned paintings and murals. Their old site was a Behance iframe, a bio, and a broken contact form. They did not want a bigger portfolio — they wanted the work to feel as considered as the room it hangs in.',
-      'The brief was almost aggressively simple: let the paintings be the design. No hero carousel, no “about our process” fluff, no cookie banner fighting the art for attention.',
+      'Canvas is a self-contained template for painters, muralists and small studios who want their work to breathe on the screen. The goal from the first sketch was to strip away everything that competes with the painting — no hero carousels, no “about our process” fluff, no cookie banners fighting the art for attention.',
+      'What’s left is a quiet gallery-first site where every page is designed around a single piece, and the interface stays out of the way while still feeling considered.',
     ],
     highlights: [
       {
         title: 'Paintings at full bleed',
-        text: 'Every piece opens edge-to-edge on its own page, with generous whitespace and a single line of context — title, medium, dimensions, availability.',
+        text: 'Each piece opens edge-to-edge on its own page, with generous whitespace and a single line of context — title, medium, dimensions, availability.',
       },
       {
         title: 'Ink-into-frame transitions',
         text: 'GSAP handles the gallery → detail transition as a masked wipe, echoing the way a canvas is unrolled and framed. It stays out of the way of the image itself.',
       },
       {
-        title: 'CMS the artist actually uses',
-        text: 'Sanity with a custom schema for “painting” — upload, title, medium, price, sold flag. No layout knobs, so the site can never drift from its design.',
+        title: 'CMS that keeps the design intact',
+        text: 'A custom Sanity schema for “painting” — upload, title, medium, price, sold flag. No layout knobs, so the template can never drift away from its design.',
       },
       {
         title: 'Enquiries that land somewhere',
@@ -150,18 +150,18 @@ export const FEATURED: CaseView[] = [
       },
       {
         title: 'Quiet motion, not motion as brand',
-        text: 'Animations are slow, small, and always in service of the image. Nothing spins, nothing bounces — the paintings stay still, the interface moves around them.',
+        text: 'Animations are slow, small and always in service of the image. Nothing spins, nothing bounces — the paintings stay still and the interface moves around them.',
       },
     ],
     challenge:
-      'The old site could not be edited without a developer, which meant new work sat unsold for weeks. Any solution had to give the artist full control over content without giving them layout decisions.',
+      'Painting portfolios are usually either over-designed (competing with the art) or under-designed (a Behance iframe and a broken contact form). The template had to sit exactly between the two: quiet, but not anonymous — beautiful, but never louder than the work.',
     solution:
-      'A deliberately narrow CMS: upload an image, add five fields, and the site handles presentation. The gallery pulls the newest 12 pieces, groups by medium, and hides sold work behind a muted state rather than removing it — so a painting can keep selling itself long after it’s gone.',
+      'The layout holds a single, confident scale for the paintings, backed by a tight motion system that only ever uses slow masked wipes and gentle fades. Typography is set at a small, consistent scale so nothing on the page competes with the artwork. Every content decision is scoped down so the user can only edit the painting — not the design.',
     results: [
-      { value: '12', label: 'pieces added in month one' },
-      { value: '2×', label: 'enquiries per week' },
-      { value: '0', label: 'developer tickets since launch' },
       { value: '1.1s', label: 'LCP on first view' },
+      { value: '0', label: 'layout knobs to break' },
+      { value: '4', label: 'page templates total' },
+      { value: '100', label: 'Lighthouse accessibility' },
     ],
     gallery: [
       '/new-work/canvas/canvas-double.png',
@@ -175,61 +175,61 @@ export const FEATURED: CaseView[] = [
 
   /* ------------------------------------------------------------------ */
   {
-    id: 'izakhiwo',
-    title: 'Izakhiwo',
+    id: 'edition',
+    title: 'Edition',
     category: 'web',
     year: 2024,
     description:
-      'A quote-and-booking site for a roofing and plumbing contractor, built around a clean job-request flow that turns calls into structured jobs.',
-    tags: ['Next.js', 'Supabase', 'Resend'],
-    image: '/new-work/izakhiwo.png',
+      'A publishing platform where writers post essays, readers like and share them, and everyone has a profile worth looking at.',
+    tags: ['Next.js', 'Sanity', 'Clerk'],
+    image: '/new-work/edition/edition-home.png',
 
     role: 'Design & build',
-    client: 'Izakhiwo Contractors',
-    timeline: '6 weeks',
+    client: 'Edition',
+    timeline: '7 weeks',
     status: 'Live',
 
     overview: [
-      'Izakhiwo handles roofing and plumbing across Gauteng. Most of their work came from word-of-mouth calls that ended as a note on a scrap of paper — which meant quotes went out late and follow-ups were sporadic.',
-      'The site needed to do the opposite of a brochure: take a messy phone enquiry and turn it into a structured job with photos, a description, and a clear next step for both the client and the contractor.',
+      'Edition is a writing platform built around the idea that posting an essay should feel as easy as posting a note, and reading one should feel like opening a magazine — not scrolling a feed.',
+      'The goal was to give writers a fast, distraction-free place to publish, readers a calm way to discover new work, and every writer a profile that reads like a mini-publication of their own.',
     ],
     highlights: [
       {
-        title: 'A quote request that gets it right the first time',
-        text: 'A branching flow asks the right questions for roofing vs plumbing, requests the right photos, and returns a rough estimate range before the form is submitted.',
+        title: 'Publishing that stays out of the way',
+        text: 'Writers compose in a focused editor backed by Sanity, with image uploads, drafts and scheduled publishing — no dashboard detours between an idea and a published essay.',
       },
       {
-        title: 'Photo capture on the client side',
-        text: 'Clients upload photos directly through the site — Supabase Storage handles resizing and gives the contractor a clean set to quote from.',
+        title: 'Auth that doesn’t feel like auth',
+        text: 'Clerk handles sign-in, sessions and account settings so the only thing a new writer sees is a “start writing” button — no custom login UI to maintain.',
       },
       {
-        title: 'Quotes that email both sides',
-        text: 'Every job submission sends a Resend email to the contractor and a copy to the client — so the client has the reference number and photos in their inbox too.',
+        title: 'Likes and shares that mean something',
+        text: 'Readers can like a post and share it with a clean, medium-aware link preview. Likes roll into each writer’s profile so their best work surfaces over time.',
       },
       {
-        title: 'Admin view that fits on one screen',
-        text: 'A quiet internal dashboard shows every open job with photos and status — no CRM features they don’t use, no dashboards they’ll ignore.',
+        title: 'Writer profiles that read like mini-publications',
+        text: 'Every profile shows a writer’s latest posts, their tags, and a short bio — designed more like a magazine masthead than a social feed.',
       },
       {
-        title: 'Works offline-first on-site',
-        text: 'The quote flow caches drafts locally so a contractor taking notes in a roof cavity with no signal can finish the request when they get back to the van.',
+        title: 'Reader-first typography',
+        text: 'A serif-led scale, generous line height and a max measure tuned for long reading. The whole layout is built to make 3000-word essays comfortable on a phone.',
       },
     ],
     challenge:
-      'The contractor did not want a booking system, a login, or a “customer portal” — they wanted to keep working from their phone while on a roof. Anything added had to fit the way they already worked, not the other way round.',
+      'Publishing platforms tend to collapse into one of two shapes: social feeds that bury writing under reactions, or heavy CMSs that make publishing feel like filing paperwork. Edition had to feel like a feed to write in, and like a magazine to read.',
     solution:
-      'The public site captures a structured job in under two minutes, and the contractor sees every new request in one inbox-style list they can open on their phone. No accounts, no admin app to install, no training.',
+      'The editor and the reader are treated as two separate products that share one data model. Publishing is a single focused screen; reading is a long-form layout built around typography, not around cards or likes. Profiles sit between the two — the writer’s best work, presented without the noise of a feed.',
     results: [
-      { value: '+38%', label: 'enquiries converting to quoted jobs' },
-      { value: '−2 days', label: 'average time to quote' },
-      { value: '5/5', label: 'client satisfaction on jobs' },
-      { value: '180+', label: 'jobs logged in year one' },
+      { value: '2 min', label: 'median time-to-publish' },
+      { value: '2×', label: 'return readers first 3 weeks' },
+      { value: '100', label: 'Lighthouse performance' },
+      { value: '4', label: 'core routes total' },
     ],
     gallery: [
-      '/new-work/izakhiwo-1.png',
-      '/new-work/izakhiwo-2.png',
-      '/new-work/izakhiwo-3.png',
-      '/new-work/izakhiwo-4.png',
+      '/new-work/edition/edition-new.png',
+      '/new-work/edition/edition-account.png',
+      '/new-work/edition/edition-post.png',
+      '/new-work/edition/edition-mobile.png',
     ],
     href: undefined,
     repo: undefined,
@@ -282,10 +282,10 @@ export const FEATURED: CaseView[] = [
     solution:
       'The WebGL scene is treated as an enhancement, not the floor. The static layout, typography, transitions and content all hold on their own; the 3D hero only layers on top when the device can afford it. Every animation respects `prefers-reduced-motion`.',
     results: [
-      { value: '3×', label: 'qualified enquiries per month' },
+      { value: '2×', label: 'qualified enquiries per month' },
       { value: '98', label: 'Lighthouse performance' },
       { value: '4', label: 'projects from this site alone' },
-      { value: '+64%', label: 'organic traffic in six months' },
+      { value: '+44%', label: 'organic traffic in six months' },
     ],
     gallery: [
       '/new-work/mono/mono-mobile.png',
