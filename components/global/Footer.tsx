@@ -14,7 +14,7 @@ const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : use
 
 const navItems = [
   { name: 'Works', href: '/works' },
-  { name: 'Gallery', href: '/gallery' },
+  { name: 'About', href: '/about' },
   { name: 'Contact', href: '/contact' },
 ];
 

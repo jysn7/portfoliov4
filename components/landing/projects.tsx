@@ -89,10 +89,10 @@ export default function Projects() {
     <section
       ref={sectionRef}
       id="work"
-      className="w-full border-t border-border px-6 py-16 sm:px-10 md:py-24 lg:px-16"
+      className="w-full px-6 py-16 sm:px-10 md:py-24 lg:px-16"
     >
       {/* Same 68rem width and side padding as the hero, so the edges line up */}
-      <div className="mx-auto w-full max-w-272">
+      <div className="mx-auto w-full max-w-8xl">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-3 md:mb-12">
           <div>
             <h2
@@ -124,7 +124,7 @@ export default function Projects() {
                 className="group block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground"
               >
                 {/* Image: bigger and near-square, same bordered window look */}
-                <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl border-[1.5px] border-foreground bg-muted transition-[transform,box-shadow] duration-300 ease-out group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[6px_6px_0_var(--primary)] md:aspect-square">
+                <div className="relative aspect-[5/4] w-full overflow-hidden rounded-xl  bg-muted transition-[transform,box-shadow] duration-300 ease-out group-hover:-translate-x-0.5 group-hover:-translate-y-0.5 group-hover:shadow-[6px_6px_0_var(--primary)] md:aspect-square">
                   <Image
                     src={p.image}
                     alt={`${p.title} preview`}

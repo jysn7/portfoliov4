@@ -100,7 +100,7 @@ export default function AboutPreview() {
       id="about"
       className="w-full px-6 py-20 sm:px-10 md:py-28 lg:px-16"
     >
-      <div className="mx-auto w-full max-w-272">
+      <div className="mx-auto w-full max-w-8xl">
         <p
           data-head
           className="mb-12 font-pixel text-[10px] uppercase tracking-[0.4em] text-muted-foreground md:mb-16"

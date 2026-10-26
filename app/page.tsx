@@ -1,6 +1,6 @@
 'use client';
 
-import Hero from '../components/landing/Hero';
+import Hero from '../components/landing/new-hero';
 import About from '../components/landing/About';
 import Contact from '../components/landing/Contact';
 import Projects from '../components/landing/projects';

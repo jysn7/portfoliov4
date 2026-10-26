@@ -84,7 +84,7 @@ export default function Signpost() {
   };
 
   return (
-    <section ref={sectionRef} className="w-full border-t border-border px-3 pb-24 pt-16 md:px-6 md:pt-24">
+    <section ref={sectionRef} className="w-full  px-3 pb-24 pt-16 md:px-6 md:pt-24">
       <div className="mx-auto flex w-full max-w-360 flex-col items-center">
         <h2
           data-sign-head
