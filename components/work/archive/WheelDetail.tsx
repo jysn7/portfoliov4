@@ -2,8 +2,8 @@ import type { RefObject } from 'react';
 import Image from 'next/image';
 import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
 
-import type { WorkView } from '../data';
-import { FOCUS, IMG_SIZES, ROUND_BTN, pad } from '../shared';
+import type { WorkView } from '@/components/work/data';
+import { FOCUS, IMG_SIZES, ROUND_BTN, pad } from '@/components/work/shared';
 
 /* the opened work: image slot on the left, copy on the right, plus the flying image that lands in the slot */
 export default function WheelDetail({

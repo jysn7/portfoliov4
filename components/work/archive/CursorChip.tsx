@@ -1,8 +1,8 @@
 import { useEffect, type RefObject } from 'react';
 import gsap from 'gsap';
 
-import type { WorkView } from '../data';
-import type { Box, DialSize } from '../shared';
+import type { WorkView } from '@/components/work/data';
+import type { Box, DialSize } from '@/components/work/shared';
 
 /* the little "drag" / "open" label that follows a mouse over the dial */
 export function CursorChip({

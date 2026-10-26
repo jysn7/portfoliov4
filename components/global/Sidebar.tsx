@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -16,27 +17,10 @@ const NAV = [
 
 const GREETING = "hi, i'm jayson";
 
-// 5x7 pixel "J"
-const J = ['.####', '...#.', '...#.', '...#.', '#..#.', '#..#.', '.###.'];
-
 const reduced = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
-
-function PixelJ() {
-  return (
-    <svg viewBox="0 0 5 7" width="14" height="20" shapeRendering="crispEdges" aria-hidden>
-      {J.flatMap((row, y) =>
-        row
-          .split('')
-          .map((c, x) =>
-            c === '#' ? <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill="currentColor" /> : null
-          )
-      )}
-    </svg>
-  );
-}
 
 const chipBase =
   'block rounded-lg border-[1.5px] border-foreground font-pixel text-[#000203] shadow-[2px_2px_0_var(--foreground)] transition-shadow duration-200 hover:shadow-[4px_5px_0_var(--foreground)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground';
@@ -233,7 +217,7 @@ export default function Navbar() {
       }`}
     >
       <nav aria-label="Primary" className="mx-auto flex h-16 w-full max-w-360 items-center justify-between gap-4 px-5 md:px-10">
-        {/* Logo: pixel J + greeting — no bordered tile */}
+        {/* Logo: pixel J image + greeting */}
         <Link
           href="/"
           aria-label="Jayson Baloyi, home"
@@ -243,10 +227,18 @@ export default function Navbar() {
           <span
             ref={logoTileRef}
             data-logo-tile
-            className="inline-flex text-primary"
+            className="inline-flex shrink-0 items-center justify-center"
             style={{ filter: `drop-shadow(2px 2px 0 ${WOOD.ink})` }}
           >
-            <PixelJ />
+            <Image
+              src="/jay/logo.png"
+              alt=""
+              width={32}
+              height={32}
+              priority
+              draggable={false}
+              className="h-9 w-9 object-contain select-none sm:h-10 sm:w-10"
+            />
           </span>
           <span aria-hidden className="flex items-center font-pixel text-base text-foreground sm:text-lg">
             {GREETING.split('').map((ch, i) => (
@@ -341,7 +333,7 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile panel — wider, better spacing, tap-friendly */}
+      {/* Mobile panel */}
       <div
         ref={panelRef}
         id="mobile-nav"
@@ -354,7 +346,7 @@ export default function Navbar() {
         }}
       >
         <ul className="flex flex-col gap-2.5 p-3.5">
-          {NAV.map((item, i) => {
+          {NAV.map((item) => {
             const active = pathname === item.href;
             return (
               <li key={item.name} data-m-item>

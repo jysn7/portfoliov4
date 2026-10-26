@@ -1,8 +1,8 @@
 import type { RefObject } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 
-import type { WorkView } from '../data';
-import { ROUND_BTN, pad } from '../shared';
+import type { WorkView } from '@/components/work/data';
+import { ROUND_BTN, pad } from '@/components/work/shared';
 
 /* left side: what the dial is pointing at */
 export default function WheelInfo({
