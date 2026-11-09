@@ -599,7 +599,9 @@ export default function AboutPage() {
         gsap
           .timeline({
             defaults: { ease: 'expo.out' },
-            onComplete: () => gsap.set(heroMasks, { overflow: 'visible' }),
+            onComplete: () => {
+              gsap.set(heroMasks, { overflow: 'visible' });
+            },
           })
           .from(heroChars, { yPercent: 115, duration: 1.1, stagger: 0.03 });
 
@@ -706,7 +708,7 @@ export default function AboutPage() {
         ScrollTrigger.batch('[data-value-card]', {
           start: 'top 90%',
           once: true,
-          onEnter: (batch) =>
+          onEnter: (batch) => {
             gsap.to(batch, {
               autoAlpha: 1,
               y: 0,
@@ -714,7 +716,8 @@ export default function AboutPage() {
               stagger: 0.1,
               ease: 'power3.out',
               clearProps: 'transform',
-            }),
+            });
+          },
         });
 
         return () => cleanups.forEach((fn) => fn());
