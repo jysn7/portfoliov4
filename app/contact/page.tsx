@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -12,40 +13,85 @@ import {
   type ReactNode,
 } from 'react';
 import gsap from 'gsap';
-import {
-  ArrowUpRight,
-  Instagram,
-  Linkedin,
-  Mail,
-  MessageCircle,
-  Twitter,
-  Volume2,
-  VolumeX,
-} from 'lucide-react';
+import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
+import { ArrowUpRight, Volume2, VolumeX } from 'lucide-react';
+import { FaGithub, FaInstagram, FaLinkedinIn, FaWhatsapp } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
+import { MdEmail } from 'react-icons/md';
+import emailjs from '@emailjs/browser';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-/* ------------------------------------------------------------------ */
-/* constants                                                            */
-/* ------------------------------------------------------------------ */
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
 
-const SIGN_R = 'polygon(0 0, calc(100% - var(--tip)) 0, 100% 50%, calc(100% - var(--tip)) 100%, 0 100%)';
+const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-const INK = '#2a1608';
-const GRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='100' viewBox='0 0 260 100'%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cg stroke='%23b27237' stroke-width='2.5'%3E%3Cpath d='M0 16 C40 8 70 24 120 16 S200 8 260 16'/%3E%3Cpath d='M0 42 C50 50 90 34 140 42 S220 50 260 42'/%3E%3Cpath d='M0 68 C30 60 80 76 130 68 S210 60 260 68'/%3E%3Cpath d='M0 90 C60 96 100 84 150 90 S230 96 260 90'/%3E%3C/g%3E%3Cg stroke='%23d9a265' stroke-width='2'%3E%3Cpath d='M20 29 C60 23 90 35 130 29'/%3E%3Cpath d='M150 56 C190 50 220 62 250 56'/%3E%3Cpath d='M10 79 C40 75 70 83 100 79'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
-const VGRAIN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='200' viewBox='0 0 40 200'%3E%3Cg fill='none' stroke='%23915427' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M10 0 C14 50 6 100 10 150 S14 190 10 200'/%3E%3Cpath d='M28 0 C24 40 32 90 28 140 S24 190 28 200'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
+/* ================================================================== */
+/* CONFIG                                                               */
+/* ================================================================== */
+const HEADING = { fontFamily: 'var(--font-heading)' } as const;
+const BODY = { fontFamily: 'var(--font-body)' } as const;
 
-const LINKS = [
-  { label: 'email', icon: Mail, val: 'jysnbly7@gmail.com', href: 'mailto:jysnbly7@gmail.com' },
-  { label: 'linkedin', icon: Linkedin, val: 'jayson-baloyi', href: 'https://www.linkedin.com/in/jayson-baloyi' },
-  { label: 'instagram', icon: Instagram, val: '@amant.dur', href: 'https://instagram.com/amant.dur' },
-  { label: 'twitter', icon: Twitter, val: '@jyysn7', href: 'https://twitter.com/jyysn7' },
-  { label: 'whatsapp', icon: MessageCircle, val: '+27 78 034 5709', href: 'https://wa.me/27780345709' },
+const HERO_TEXT = 'Say hello ;)';
+const HERO_HEIGHT = '62svh';
+const EMAIL = 'jysnbly7@gmail.com';
+
+/* EmailJS (same service / template / key as the old contact page) */
+const EMAILJS = {
+  service: 'service_cyeam6u',
+  template: 'template_y3b17lt',
+  key: 'UfMt4Atrq_it57z6i',
+};
+
+/* the line under the hero heading cycles through these, character by character */
+const MORPH_PREFIX = 'Let’s talk about';
+const PHRASES = ['a website.', 'a game.', 'a 3D scene.', 'an experiment.', 'nothing at all.'];
+const GLYPHS = 'abcdefghijklmnopqrstuvwxyz&/<>_';
+
+/* little bursts of colour when you click the hero */
+const BURST_COLORS = ['var(--primary)', '#e1306c', '#25d366', '#0a66c2', 'var(--foreground)'];
+
+const FOCUS = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
+const BTN = `inline-flex h-11 items-center gap-2 rounded-2xl px-5 text-sm font-medium transition-colors duration-200 ${FOCUS}`;
+const BTN_PRIMARY = `${BTN} bg-foreground text-background hover:bg-foreground/85 disabled:pointer-events-none disabled:opacity-60`;
+const BTN_MUTED = `${BTN} bg-muted text-foreground hover:bg-foreground hover:text-background`;
+const LABEL = 'text-sm text-muted-foreground';
+const FIELD =
+  'h-12 w-full rounded-xl border border-border bg-muted px-4 text-sm text-foreground shadow-none outline-none transition-colors duration-200 placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-0';
+
+/* `bg` / `fg` colour the back of each flipbook tile (the side revealed on hover) */
+const SOCIALS: { label: string; href: string; icon: ReactNode; bg: string; fg: string }[] = [
+  {
+    label: 'Email',
+    href: `mailto:${EMAIL}`,
+    icon: <MdEmail size={22} />,
+    bg: 'var(--primary)',
+    fg: 'var(--primary-foreground)',
+  },
+  { label: 'GitHub', href: 'https://github.com/jysn7', icon: <FaGithub size={21} />, bg: 'var(--foreground)', fg: 'var(--background)' },
+  {
+    label: 'LinkedIn',
+    href: 'https://www.linkedin.com/in/jayson-baloyi-2a01512b0',
+    icon: <FaLinkedinIn size={21} />,
+    bg: '#0a66c2',
+    fg: '#ffffff',
+  },
+  { label: 'Instagram', href: 'https://instagram.com/amant.dur', icon: <FaInstagram size={21} />, bg: '#e1306c', fg: '#ffffff' },
+  { label: 'X', href: 'https://x.com/jyysn7', icon: <FaXTwitter size={20} />, bg: 'var(--foreground)', fg: 'var(--background)' },
+  { label: 'WhatsApp', href: 'https://wa.me/+27780345709', icon: <FaWhatsapp size={22} />, bg: '#25d366', fg: '#ffffff' },
 ];
 
-const TOPICS = ['website', 'game', '3d', 'experiment', 'just saying hi'];
+const reduced = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const t = (s: number) => (reduced() ? 0 : s);
+const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
+const angDiff = (a: number, b: number) => ((a - b + 540) % 360) - 180;
 
-/* ---- phone geometry (SVG units) ---- */
+/* ================================================================== */
+/* PHONE GEOMETRY (SVG units)                                           */
+/* ================================================================== */
 const VB = { x: 0, y: -70, w: 1100, h: 770 };
 const CX = 550;
 const BASE = VB.y + VB.h;
@@ -78,7 +124,7 @@ const arc = (r: number, a0: number, a1: number) => {
   return `M ${s.x} ${s.y} A ${r} ${r} 0 0 1 ${e.x} ${e.y}`;
 };
 
-const BODY = `M ${CX - R_DOME} ${BASE} A ${R_DOME} ${R_DOME} 0 0 1 ${CX + R_DOME} ${BASE} Z`;
+const BODY_PATH = `M ${CX - R_DOME} ${BASE} A ${R_DOME} ${R_DOME} 0 0 1 ${CX + R_DOME} ${BASE} Z`;
 const PLINTH = `M ${CX - R_DOME} ${BASE} V ${BASE - 22} H ${CX + R_DOME} V ${BASE} Z`;
 
 const steps = (d: number) => (d === 0 ? 10 : d);
@@ -118,12 +164,6 @@ const cordPath = (p: number) => {
   return `M ${ax.toFixed(1)} ${ay.toFixed(1)} Q ${mx.toFixed(1)} ${my.toFixed(1)} ${CORD_END.x} ${CORD_END.y}`;
 };
 
-const reduced = () =>
-  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const t = (s: number) => (reduced() ? 0 : s);
-const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
-const angDiff = (a: number, b: number) => ((a - b + 540) % 360) - 180;
-
 const sfx = {
   ctx: null as AudioContext | null,
   on: true,
@@ -154,60 +194,111 @@ const sfx = {
 };
 
 type Status = 'idle' | 'connected' | 'wrong';
-type FormState = 'idle' | 'missing' | 'sent';
+type SendState = 'idle' | 'sending' | 'sent' | 'error';
 
-/* ------------------------------------------------------------------ */
-/* small pieces                                                         */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/* SHARED PIECES                                                        */
+/* ================================================================== */
 
-function Board({
-  tone,
-  className = '',
-  inner = '',
-  nails,
-  knot,
-  children,
-}: {
-  tone: string;
-  className?: string;
-  inner?: string;
-  nails: string;
-  knot?: string;
-  children: ReactNode;
-}) {
-  const nail = `absolute z-[1] size-2.5 rounded-full border-2 bg-[#b9bfc6] md:size-3 ${nails}`;
+/* section heading: masked letter reveal, animated by the page-level effect */
+function SectionHead({ title, note, aside }: { title: string; note?: string; aside?: ReactNode }) {
   return (
-    <div className={`relative w-fit ${className}`} style={{ filter: `drop-shadow(5px 5px 0 ${INK})` }}>
-      <div style={{ clipPath: SIGN_R, backgroundColor: INK }} className="p-[3px]">
-        <div
-          style={{ clipPath: SIGN_R, backgroundColor: tone, backgroundImage: GRAIN, backgroundSize: '260px 100px' }}
-          className={`relative ${inner}`}
+    <header
+      data-header
+      className="mb-8 flex flex-col gap-4 md:mb-12 md:flex-row md:items-end md:justify-between md:gap-12"
+    >
+      <div>
+        <h2
+          aria-label={title}
+          className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl"
+          style={HEADING}
         >
-          <span aria-hidden className="absolute inset-x-0 top-0 h-1.5 bg-[#efc18a]" />
-          <span aria-hidden className="absolute inset-x-0 bottom-0 h-2 bg-[#93582a]" />
-          <span aria-hidden className={`${nail} top-[22%]`} style={{ borderColor: INK }} />
-          <span aria-hidden className={`${nail} bottom-[22%]`} style={{ borderColor: INK }} />
-          {knot && (
+          {title.split('').map((char, i) => (
             <span
-              aria-hidden
-              className={`absolute grid size-5 place-items-center rounded-full border-[2.5px] bg-[#a86a30] md:size-6 ${knot}`}
-              style={{ borderColor: '#7a4519' }}
+              key={i}
+              data-hmask
+              aria-hidden="true"
+              className="-mb-2 inline-block overflow-hidden pb-2 align-bottom"
             >
-              <span className="size-2 rounded-full border-2 md:size-2.5" style={{ borderColor: '#7a4519' }} />
+              <span data-hchar className="inline-block will-change-transform">
+                {char === ' ' ? '\u00A0' : char}
+              </span>
             </span>
-          )}
-          {children}
-        </div>
+          ))}
+        </h2>
+        {note && (
+          <p
+            data-sub
+            className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base"
+            style={HEADING}
+          >
+            {note}
+          </p>
+        )}
       </div>
+      {aside && <div data-sub>{aside}</div>}
+    </header>
+  );
+}
+
+/* a row of flipbook tiles: each one flips over on hover to a coloured back face */
+function Socials() {
+  return (
+    <div data-reveal>
+      <ul className="flex flex-wrap items-center gap-3">
+        {SOCIALS.map((s) => (
+          <li key={s.label}>
+            <a
+              data-social
+              href={s.href}
+              target={s.href.startsWith('http') ? '_blank' : undefined}
+              rel="noopener noreferrer"
+              aria-label={s.label}
+              className={`relative block size-11 rounded-xl md:size-12 ${FOCUS}`}
+              style={{ perspective: 600 }}
+            >
+              <span
+                data-social-inner
+                className="relative block size-full will-change-transform"
+                style={{ transformStyle: 'preserve-3d' }}
+              >
+                {/* front: neutral */}
+                <span
+                  aria-hidden
+                  className="absolute inset-0 grid place-items-center rounded-xl bg-muted text-foreground"
+                  style={{ backfaceVisibility: 'hidden' }}
+                >
+                  {s.icon}
+                </span>
+                {/* back: a bit of colour, revealed when the tile flips */}
+                <span
+                  aria-hidden
+                  className="absolute inset-0 grid place-items-center rounded-xl"
+                  style={{
+                    backfaceVisibility: 'hidden',
+                    transform: 'rotateX(180deg)',
+                    backgroundColor: s.bg,
+                    color: s.fg,
+                  }}
+                >
+                  {s.icon}
+                </span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-/* ------------------------------------------------------------------ */
-
+/* ================================================================== */
+/* PAGE                                                                 */
+/* ================================================================== */
 export default function ContactPage() {
   const scope = useRef<HTMLElement>(null);
   const stageRef = useRef<HTMLElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const phoneWrapRef = useRef<HTMLDivElement>(null);
   const phoneRef = useRef<SVGGElement>(null);
   const plateRef = useRef<SVGGElement>(null);
@@ -227,13 +318,9 @@ export default function ContactPage() {
   const [number, setNumber] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [sound, setSound] = useState(true);
-  const [clock, setClock] = useState('');
 
-  const [fName, setFName] = useState('');
-  const [fEmail, setFEmail] = useState('');
-  const [fMsg, setFMsg] = useState('');
-  const [topic, setTopic] = useState(TOPICS[0]);
-  const [formState, setFormState] = useState<FormState>('idle');
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [sendState, setSendState] = useState<SendState>('idle');
 
   const setSt = useCallback((s: Status) => {
     statusRef.current = s;
@@ -244,61 +331,313 @@ export default function ContactPage() {
     sfx.on = sound;
   }, [sound]);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      if (reduced()) return;
-      gsap.from('[data-board]', { x: '-115%', duration: 1.4, ease: 'expo.out', stagger: 0.12, delay: 0.15 });
-      gsap.from('[data-reveal]', { y: 28, autoAlpha: 0, duration: 1.1, ease: 'expo.out', stagger: 0.09, delay: 0.5 });
-    }, scope);
-    return () => ctx.revert();
-  }, []);
+  /* ---------------- motion: hero, headings, socials, fields, phone ---------------- */
+  useIsoLayoutEffect(() => {
+    const main = scope.current;
+    if (!main) return;
 
-  useEffect(() => {
-    const el = phoneWrapRef.current;
-    const stage = stageRef.current;
-    if (!el || !stage || reduced()) return;
-    gsap.set(el, { yPercent: 35, autoAlpha: 0 });
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        gsap.to(el, { yPercent: 0, autoAlpha: 1, duration: 1.5, ease: 'expo.out' });
-        io.disconnect();
+    const mm = gsap.matchMedia(main);
+
+    mm.add(
+      {
+        motion: '(prefers-reduced-motion: no-preference)',
+        hover: '(hover: hover) and (pointer: fine)',
       },
-      { threshold: 0.12 }
+      (context) => {
+        const { motion, hover } = context.conditions as { motion: boolean; hover: boolean };
+
+        // Reduced motion: everything stays visible in its final state
+        if (!motion) return;
+
+        const hero = main.querySelector<HTMLElement>('[data-hero]')!;
+        const heroContent = main.querySelector<HTMLElement>('[data-hero-content]')!;
+        const chars = gsap.utils.toArray<HTMLElement>('[data-char]', hero);
+        const masks = gsap.utils.toArray<HTMLElement>('[data-mask]', hero);
+        const subs = gsap.utils.toArray<HTMLElement>('[data-hero-sub]', hero);
+        const morph = hero.querySelector<HTMLElement>('[data-morph]');
+        const glow = hero.querySelector<HTMLElement>('[data-glow]');
+        const burstLayer = hero.querySelector<HTMLElement>('[data-burst-layer]');
+
+        /* ---------- hero entrance: heading letters, then the line ---------- */
+        gsap.set(subs, { opacity: 0, y: 14 });
+        gsap
+          .timeline({
+            defaults: { ease: 'expo.out' },
+            onComplete: () => {
+              gsap.set(masks, { overflow: 'visible' }); // lets the wave lift letters freely
+            },
+          })
+          .from(chars, { yPercent: 115, duration: 1.1, stagger: 0.03 })
+          .to(subs, { opacity: 1, y: 0, duration: 0.9, stagger: 0.1 }, '-=0.7');
+
+        /* ---------- scrolling: the hero drifts up and fades back ---------- */
+        gsap.to(heroContent, {
+          opacity: 0,
+          y: -60,
+          scale: 0.96,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: hero,
+            start: 'top top',
+            end: 'bottom top',
+            scrub: true,
+            invalidateOnRefresh: true,
+          },
+        });
+
+        /* ---------- the line cycles through what you might want to talk about ---------- */
+        let idx = 0;
+        let timer: gsap.core.Tween | null = null;
+        let scramble: gsap.core.Tween | null = null;
+
+        const scrambleTo = (to: string) => {
+          if (!morph) return;
+          scramble?.kill();
+          const from = morph.textContent ?? '';
+          const len = Math.max(from.length, to.length);
+          const lag = 6;
+          const state = { p: 0 };
+
+          scramble = gsap.to(state, {
+            p: len + lag,
+            duration: 1.1,
+            ease: 'none',
+            onUpdate: () => {
+              let out = '';
+              for (let i = 0; i < len; i++) {
+                const target = to[i] ?? '';
+                if (state.p >= i + lag) out += target;
+                else if (state.p >= i)
+                  out +=
+                    target === ' ' || target === '' || target === '.'
+                      ? target
+                      : GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
+                else out += from[i] ?? '';
+              }
+              morph.textContent = out;
+            },
+            onComplete: () => {
+              morph.textContent = to;
+            },
+          });
+        };
+
+        const tick = () => {
+          idx = (idx + 1) % PHRASES.length;
+          scrambleTo(PHRASES[idx]);
+          timer = gsap.delayedCall(3, tick);
+        };
+        const start = () => {
+          timer?.kill();
+          timer = gsap.delayedCall(2.4, tick);
+        };
+        const stop = () => timer?.kill();
+
+        if (morph) {
+          ScrollTrigger.create({
+            trigger: hero,
+            start: 'top bottom',
+            end: 'bottom top',
+            onToggle: (self) => (self.isActive ? start() : stop()),
+          });
+        }
+
+        const cleanups: Array<() => void> = [
+          () => {
+            timer?.kill();
+            scramble?.kill();
+            if (morph) morph.textContent = PHRASES[0];
+          },
+        ];
+
+        /* ---------- click anywhere in the hero: a small burst of colour ---------- */
+        const burst = (x: number, y: number) => {
+          if (!burstLayer) return;
+          const count = 12;
+          for (let i = 0; i < count; i++) {
+            const p = document.createElement('span');
+            p.className = 'absolute block size-1.5 rounded-sm';
+            p.style.backgroundColor = BURST_COLORS[Math.floor(Math.random() * BURST_COLORS.length)];
+            p.style.left = `${x}px`;
+            p.style.top = `${y}px`;
+            burstLayer.appendChild(p);
+
+            const a = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+            const d = 40 + Math.random() * 70;
+            gsap.fromTo(
+              p,
+              { x: 0, y: 0, scale: 1, opacity: 1, rotation: 0 },
+              {
+                x: Math.cos(a) * d,
+                y: Math.sin(a) * d - 10,
+                rotation: Math.random() * 360,
+                scale: 0,
+                opacity: 0,
+                duration: 0.8 + Math.random() * 0.4,
+                ease: 'power3.out',
+                onComplete: () => p.remove(),
+              }
+            );
+          }
+        };
+        const onHeroClick = (e: MouseEvent) => {
+          const r = hero.getBoundingClientRect();
+          burst(e.clientX - r.left, e.clientY - r.top);
+        };
+        hero.addEventListener('click', onHeroClick);
+        cleanups.push(() => hero.removeEventListener('click', onHeroClick));
+
+        /* ---------- mouse only: heading wave + a soft glow that follows the pointer ---------- */
+        if (hover) {
+          const charY = chars.map((c) => gsap.quickTo(c, 'y', { duration: 0.45, ease: 'power3' }));
+
+          if (glow) gsap.set(glow, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
+          const glowX = glow ? gsap.quickTo(glow, 'x', { duration: 0.6, ease: 'power3' }) : null;
+          const glowY = glow ? gsap.quickTo(glow, 'y', { duration: 0.6, ease: 'power3' }) : null;
+
+          const onMove = (e: PointerEvent) => {
+            chars.forEach((c, i) => {
+              const r = c.getBoundingClientRect();
+              const dx = e.clientX - (r.left + r.width / 2);
+              const dy = e.clientY - (r.top + r.height / 2);
+              charY[i](-8 * Math.exp(-(dx * dx + dy * dy) / (2 * 90 * 90)));
+            });
+            if (glow && glowX && glowY) {
+              const r = hero.getBoundingClientRect();
+              glowX(e.clientX - r.left);
+              glowY(e.clientY - r.top);
+            }
+          };
+          const onEnter = (e: PointerEvent) => {
+            if (!glow) return;
+            const r = hero.getBoundingClientRect();
+            gsap.set(glow, { x: e.clientX - r.left, y: e.clientY - r.top });
+            gsap.to(glow, { autoAlpha: 1, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
+          };
+          const onLeave = () => {
+            gsap.to(chars, { y: 0, duration: 0.8, ease: 'elastic.out(1, 0.5)', overwrite: 'auto' });
+            if (glow) gsap.to(glow, { autoAlpha: 0, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
+          };
+          hero.addEventListener('pointermove', onMove);
+          hero.addEventListener('pointerenter', onEnter);
+          hero.addEventListener('pointerleave', onLeave);
+          cleanups.push(() => {
+            hero.removeEventListener('pointermove', onMove);
+            hero.removeEventListener('pointerenter', onEnter);
+            hero.removeEventListener('pointerleave', onLeave);
+          });
+
+          /* ---------- socials: flipbook tiles, front -> coloured back ---------- */
+          const socials = gsap.utils.toArray<HTMLElement>('[data-social]', main);
+          socials.forEach((social) => {
+            const inner = social.querySelector<HTMLElement>('[data-social-inner]');
+            if (!inner) return;
+
+            const tl = gsap.timeline({ paused: true });
+            tl.to(inner, { rotationX: -180, duration: 0.7, ease: 'power3.inOut' }, 0).to(
+              inner,
+              { y: -6, scale: 1.1, duration: 0.35, ease: 'power2.out', yoyo: true, repeat: 1 },
+              0
+            );
+
+            const enter = () => tl.timeScale(1).play();
+            const leave = () => tl.timeScale(1.4).reverse();
+
+            social.addEventListener('pointerenter', enter);
+            social.addEventListener('pointerleave', leave);
+            social.addEventListener('focusin', enter);
+            social.addEventListener('focusout', leave);
+
+            cleanups.push(() => {
+              social.removeEventListener('pointerenter', enter);
+              social.removeEventListener('pointerleave', leave);
+              social.removeEventListener('focusin', enter);
+              social.removeEventListener('focusout', leave);
+              tl.kill();
+            });
+          });
+        }
+
+        /* ---------- section headings: masked letter reveal, then the note + aside ---------- */
+        gsap.utils.toArray<HTMLElement>('[data-header]', main).forEach((header) => {
+          const hchars = header.querySelectorAll<HTMLElement>('[data-hchar]');
+          const hmasks = header.querySelectorAll<HTMLElement>('[data-hmask]');
+          const hsubs = header.querySelectorAll<HTMLElement>('[data-sub]');
+
+          gsap.set(hsubs, { opacity: 0, y: 14 });
+          gsap
+            .timeline({
+              defaults: { ease: 'expo.out' },
+              scrollTrigger: { trigger: header, start: 'top 88%', once: true },
+              onComplete: () => {
+                gsap.set(hmasks, { overflow: 'visible' });
+              },
+            })
+            .from(hchars, { yPercent: 115, duration: 1.1, stagger: 0.03 })
+            .to(hsubs, { opacity: 1, y: 0, duration: 0.9, stagger: 0.1 }, '-=0.7');
+        });
+
+        /* ---------- left column, socials and form fields: rise in on scroll ---------- */
+        const reveals = gsap.utils.toArray<HTMLElement>('[data-reveal]', main);
+        gsap.set(reveals, { opacity: 0, y: 28 });
+        ScrollTrigger.batch(reveals, {
+          start: 'top 92%',
+          once: true,
+          onEnter: (batch) =>
+            gsap.to(batch, {
+              opacity: 1,
+              y: 0,
+              duration: 0.9,
+              stagger: 0.08,
+              ease: 'power3.out',
+              clearProps: 'transform',
+            }),
+        });
+
+        /* ---------- the phone rises into frame ---------- */
+        const wrap = phoneWrapRef.current;
+        const stage = stageRef.current;
+        if (wrap && stage) {
+          gsap.set(wrap, { yPercent: 35, autoAlpha: 0 });
+          ScrollTrigger.create({
+            trigger: stage,
+            start: 'top 80%',
+            once: true,
+            onEnter: () => gsap.to(wrap, { yPercent: 0, autoAlpha: 1, duration: 1.5, ease: 'expo.out' }),
+          });
+        }
+
+        return () => cleanups.forEach((fn) => fn());
+      }
     );
-    io.observe(stage);
-    return () => {
-      io.disconnect();
-      gsap.killTweensOf(el);
-    };
+
+    return () => mm.revert();
   }, []);
 
-  useEffect(() => {
-    const fmt = new Intl.DateTimeFormat('en-ZA', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: 'Africa/Johannesburg',
-    });
-    const tick = () => setClock(fmt.format(new Date()));
-    tick();
-    const id = window.setInterval(tick, 30000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!fMsg.trim()) {
-      setFormState('missing');
-      return;
-    }
-    const who = fName.trim();
-    const subject = `${topic} / hello from ${who || 'your site'}`;
-    const body = `${fMsg.trim()}\n\n${who}${fEmail.trim() ? ` (${fEmail.trim()})` : ''}`;
-    window.location.href = `mailto:jysnbly7@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setFormState('sent');
+  /* ---------------- form (EmailJS) ---------------- */
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData((d) => ({ ...d, [e.target.name]: e.target.value }));
+    if (sendState === 'sent' || sendState === 'error') setSendState('idle');
   };
 
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!formRef.current || sendState === 'sending') return;
+
+    setSendState('sending');
+
+    emailjs
+      .sendForm(EMAILJS.service, EMAILJS.template, formRef.current, EMAILJS.key)
+      .then(() => {
+        setSendState('sent');
+        setFormData({ name: '', email: '', message: '' });
+      })
+      .catch(() => {
+        setSendState('error');
+      });
+  };
+
+  /* ---------------- phone ---------------- */
   const setPlate = useCallback((v: number) => {
     gsap.set(plateRef.current, { rotation: v, svgOrigin: `${C.x} ${C.y}` });
   }, []);
@@ -440,10 +779,10 @@ export default function ContactPage() {
   const onPadDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     sfx.init();
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    const pad = padRef.current;
-    if (!pad) return;
+    const padEl = padRef.current;
+    if (!padEl) return;
 
-    const box = pad.getBoundingClientRect();
+    const box = padEl.getBoundingClientRect();
     const cx = box.left + box.width / 2;
     const cy = box.top + box.height / 2;
     const unit = box.width / 2 / R_PLATE;
@@ -530,277 +869,236 @@ export default function ContactPage() {
     setNumber('');
   };
 
-  const focus = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground';
-  const pill = `flex h-10 items-center gap-1.5 rounded-full px-5 font-pixel text-xs transition-colors duration-200 ${focus}`;
-  const pillSoft = `${pill} bg-muted text-foreground hover:bg-foreground hover:text-background`;
-
-  // Borderless fields on a secondary surface. Smaller text than before.
-  const field =
-    'w-full rounded-lg border-none bg-transparent px-3 py-2 text-sm text-foreground shadow-none outline-none placeholder:text-muted-foreground placeholder:opacity-70 focus-visible:border-none focus-visible:ring-0';
-
   const hint = !off
-    ? 'tap the handset to pick up'
+    ? 'Tap the handset to pick up.'
     : status === 'connected'
-      ? 'connected. say something clever.'
+      ? 'Connected. Say something clever.'
       : status === 'wrong'
-        ? 'wrong number. hang on, resetting'
-        : 'drag a hole round to the stop, or just tap a number';
+        ? 'Wrong number. Hang on, resetting.'
+        : 'Drag a hole round to the stop, or just tap a number.';
+
+  const svgText = { fontFamily: 'var(--font-heading)' } as const;
 
   return (
-    <main ref={scope} className="relative w-full select-none overflow-x-hidden pb-0">
-      <header className="relative z-10 pt-48 md:pt-72">
-        <div className="pointer-events-none absolute left-0 top-48 h-[17rem] w-full md:top-72 md:h-[26rem]">
-          <span
-            aria-hidden
-            className="absolute -top-5 bottom-0 left-0 w-7 rounded-tr-lg border-r-[3px] border-t-[3px] md:w-10"
-            style={{ backgroundColor: '#b97c43', backgroundImage: VGRAIN, backgroundSize: '40px 200px', borderColor: INK }}
+    <main ref={scope} className="relative w-full select-none overflow-x-clip" style={BODY}>
+      {/* -------------------------------------------------------------- */}
+      {/* Hero: centered heading and a cycling line                        */}
+      {/* -------------------------------------------------------------- */}
+      <header
+        data-hero
+        className="relative flex w-full flex-col items-center justify-center px-4 mt-12 md:mt-32 text-center"
+        style={{ minHeight: HERO_HEIGHT }}
+      >
+        {/* soft glow that follows the pointer (mouse only) */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            data-glow
+            className="invisible absolute left-0 top-0 size-104 rounded-full"
+            style={{
+              background:
+                'radial-gradient(circle, color-mix(in srgb, var(--primary) 22%, transparent), transparent 65%)',
+            }}
           />
-
-          <div data-board className="absolute left-0 top-10 md:top-16">
-            <Board
-              tone="#c98d51"
-              className="origin-left -translate-x-6 -rotate-[8deg] [--tip:2.5rem] md:[--tip:4.25rem]"
-              inner="py-1 pl-14 pr-[calc(var(--tip)+1rem)] md:py-2 md:pl-[5.5rem] md:pr-[calc(var(--tip)+1.75rem)]"
-              nails="left-[1.9rem] md:left-[2.2rem]"
-              knot="right-[calc(var(--tip)+0.3rem)] top-2.5 md:top-4"
-            >
-              <h1 className="relative font-display font-soft text-[clamp(3.25rem,13vw,8.5rem)] font-normal leading-none tracking-[-0.045em] text-[#2a1608] [text-shadow:0_2px_0_#efc18a] md:[text-shadow:0_3px_0_#efc18a]">
-                contact
-              </h1>
-            </Board>
-          </div>
-
-          <div data-board className="absolute left-0 top-[8.25rem] md:top-[14.5rem]">
-            <Board
-              tone="#d39a5c"
-              className="origin-left -translate-x-8 -rotate-[4deg] [--tip:1.5rem] md:[--tip:2.25rem]"
-              inner="py-1.5 pl-[4.5rem] pr-[calc(var(--tip)+0.9rem)] md:py-2 md:pl-[6rem]"
-              nails="left-[2.4rem] md:left-[2.7rem]"
-            >
-              <span className="relative block font-pixel text-xs text-[#2a1608] [text-shadow:0_1.5px_0_#efc18a] md:text-sm">
-                say hello
-              </span>
-            </Board>
-          </div>
-
-          <div data-board className="absolute left-0 top-[11.25rem] md:top-[19.5rem]">
-            <Board
-              tone="#bd8449"
-              className="origin-left -translate-x-10 rotate-[2.5deg] [--tip:1.25rem] md:[--tip:1.75rem]"
-              inner="py-1 pl-20 pr-[calc(var(--tip)+0.75rem)] md:py-1.5 md:pl-[6.5rem]"
-              nails="left-[2.9rem] md:left-[3.2rem]"
-            >
-              <span className="relative block font-pixel text-[10px] text-[#2a1608] [text-shadow:0_1.5px_0_#efc18a] md:text-xs">
-                or call, at the bottom
-              </span>
-            </Board>
-          </div>
         </div>
 
-        <div className="mx-auto max-w-6xl px-4 pt-[17rem] md:flex md:min-h-[26rem] md:items-end md:justify-end md:px-8 md:pt-0">
-          <div data-reveal className="max-w-[34ch] md:pb-4">
-            <p className="font-pixel text-xs tracking-wide text-muted-foreground">let&apos;s talk</p>
-            <p className="mt-2 font-display text-lg italic leading-snug text-foreground md:text-xl">
-              have a project in mind, or just want to chat?
-            </p>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              drop a message below, or pick up the phone at the bottom of the page. i usually respond faster than a
-              compiler error.
-            </p>
-          </div>
+        {/* click bursts land here */}
+        <div data-burst-layer aria-hidden className="pointer-events-none absolute inset-0 z-20 overflow-hidden" />
+
+        <div data-hero-content className="relative z-10 flex flex-col items-center will-change-transform">
+          <h1
+            aria-label={HERO_TEXT}
+            className="mx-auto max-w-xl text-3xl font-semibold tracking-tight text-foreground md:text-5xl"
+            style={HEADING}
+          >
+            {HERO_TEXT.split(' ').map((word, w, words) => (
+              <span key={w}>
+                <span className="inline-block whitespace-nowrap">
+                  {Array.from(word).map((char, i) => (
+                    <span
+                      key={i}
+                      data-mask
+                      aria-hidden="true"
+                      className="-mb-2 inline-block overflow-hidden pb-2 align-bottom"
+                    >
+                      <span data-char className="inline-block will-change-transform">
+                        {char}
+                      </span>
+                    </span>
+                  ))}
+                </span>
+                {w < words.length - 1 ? ' ' : null}
+              </span>
+            ))}
+          </h1>
+
+          <p
+            data-hero-sub
+            className="mt-3 text-sm leading-relaxed text-muted-foreground md:text-base"
+            style={HEADING}
+          >
+            <span className="sr-only">{`${MORPH_PREFIX} ${PHRASES.join(' ')}`}</span>
+            <span aria-hidden="true">
+              {MORPH_PREFIX}
+              <span data-morph className="block min-h-[1.5em] text-foreground">
+                {PHRASES[0]}
+              </span>
+            </span>
+          </p>
         </div>
       </header>
 
-      <section className="relative z-10 mx-auto mt-20 max-w-6xl px-4 md:mt-32 md:px-8">
-        <div className="grid gap-16 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-24">
-          <div className="flex flex-col gap-14">
-            <div data-reveal>
-              <p className="mb-5 font-pixel text-xs tracking-wide text-muted-foreground">find me</p>
-              <ul className="flex flex-col gap-1">
-                {LINKS.map((item) => (
-                  <li key={item.label}>
-                    <a
-                      href={item.href}
-                      target={item.href.startsWith('http') ? '_blank' : undefined}
-                      rel="noopener noreferrer"
-                      className={`group flex items-center gap-4 py-2 ${focus}`}
-                    >
-                      <span className="grid size-11 shrink-0 place-items-center rounded-full bg-muted text-foreground transition-colors duration-300 group-hover:bg-foreground group-hover:text-background">
-                        <item.icon size={18} strokeWidth={1.5} aria-hidden />
-                      </span>
-                      <span className="min-w-0 flex-1 transition-transform duration-300 group-hover:translate-x-1">
-                        <span className="block font-pixel text-[11px] text-muted-foreground">{item.label}</span>
-                        <span className="block truncate text-sm tracking-wide text-foreground">{item.val}</span>
-                      </span>
-                      <ArrowUpRight
-                        size={18}
-                        strokeWidth={1.5}
-                        aria-hidden
-                        className="-translate-x-2 scale-0 text-foreground transition-transform duration-300 group-hover:translate-x-0 group-hover:scale-100"
-                      />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+      {/* -------------------------------------------------------------- */}
+      {/* Get in touch (left) + the form (right). Socials sit under the    */}
+      {/* get in touch side.                                               */}
+      {/* -------------------------------------------------------------- */}
+      <section id="message" className="w-full px-4 py-12 md:px-8 md:py-20">
+        <div className="mx-auto w-full max-w-360">
+          <SectionHead title="Get in touch" note="Pick a channel, or tell me what you’re building." />
 
-            <div data-reveal>
-              <p className="mb-3 font-pixel text-xs tracking-wide text-muted-foreground">based in</p>
-              <p className="font-display font-soft text-3xl leading-none tracking-[-0.03em] text-foreground md:text-4xl">
-                johannesburg,
-                <br />
-                south africa
-              </p>
-              <p className="mt-4 flex items-center gap-2 font-pixel text-xs text-muted-foreground">
-                <span className="size-2 rounded-full bg-primary" />
-                {clock ? `${clock} sast, probably awake` : 'probably awake'}
-              </p>
-            </div>
-          </div>
-
-          <form data-reveal onSubmit={onSubmit} noValidate className="flex flex-col gap-8 md:gap-10">
-            <div>
-              <p className="font-pixel text-xs tracking-wide text-muted-foreground">send a message</p>
-              <h2 className="mt-3 font-display font-soft text-[clamp(2.25rem,5vw,4rem)] leading-[0.95] tracking-[-0.04em] text-foreground">
-                tell me what you&rsquo;re building
-              </h2>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label htmlFor="c-name" className="font-pixel text-xs text-muted-foreground">
-                name
-              </label>
-              <Input
-                id="c-name"
-                name="name"
-                type="text"
-                autoComplete="name"
-                value={fName}
-                onChange={(e) => setFName(e.target.value)}
-                placeholder="your name"
-                className={`${field} bg-secondary`}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label htmlFor="c-email" className="font-pixel text-xs text-muted-foreground">
-                email
-              </label>
-              <Input
-                id="c-email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                value={fEmail}
-                onChange={(e) => setFEmail(e.target.value)}
-                placeholder="you@email.com"
-                className={`${field} bg-secondary`}
-              />
-            </div>
-
-            <fieldset className="min-w-0">
-              <legend className="font-pixel text-xs text-muted-foreground">
-                what&rsquo;s it about
-              </legend>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {TOPICS.map((tp) => {
-                  const on = topic === tp;
-                  return (
-                    <button
-                      key={tp}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => setTopic(tp)}
-                      className={`h-10 rounded-full px-5 font-pixel text-xs transition-colors duration-200 ${focus} ${
-                        on
-                          ? 'bg-foreground text-background'
-                          : 'bg-muted text-foreground hover:bg-primary hover:text-primary-foreground'
-                      }`}
-                    >
-                      {tp}
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            <div className="flex flex-col gap-1">
-              <label htmlFor="c-msg" className="font-pixel text-xs text-muted-foreground">
-                message
-              </label>
-              <Textarea
-                id="c-msg"
-                name="message"
-                rows={4}
-                value={fMsg}
-                onChange={(e) => {
-                  setFMsg(e.target.value);
-                  if (formState !== 'idle') setFormState('idle');
-                }}
-                placeholder="tell me about the project"
-                className={`${field} min-h-0 resize-none bg-secondary`}
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
-              {/* Send button as a cartoon signpost board */}
-              <button
-                type="submit"
-                className={`group relative inline-flex items-center gap-3 rounded-md border-[2.5px] bg-[#c98d51] py-2 pl-5 pr-2 font-pixel text-xs text-[#2a1608] transition-transform duration-150 ease-[cubic-bezier(0.19,1,0.22,1)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 ${focus}`}
-                style={{
-                  borderColor: INK,
-                  backgroundImage: GRAIN,
-                  backgroundSize: '260px 100px',
-                  boxShadow: `4px 4px 0 ${INK}`,
-                }}
-              >
-                {/* Top edge highlight */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-x-0 top-0 h-1 rounded-t-[4px] bg-[#efc18a]"
-                />
-                {/* Bottom edge shadow */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-x-0 bottom-0 h-1 rounded-b-[4px] bg-[#93582a]"
-                />
-                {/* Label */}
-                <span className="relative [text-shadow:0_1px_0_#efc18a]">
-                  {formState === 'sent' ? 'sent!' : 'send message'}
-                </span>
-                {/* Arrow chip */}
-                <span
-                  aria-hidden
-                  className="relative grid size-8 place-items-center rounded-full border-2 bg-[#c98d51] text-[#2a1608] transition-transform duration-500 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:rotate-45"
-                  style={{ borderColor: INK }}
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-2 md:gap-16">
+            {/* left: get in touch, then the socials */}
+            <div className="flex flex-col gap-10">
+              <div data-reveal className="flex flex-col gap-3">
+                <p className={LABEL}>Email me directly</p>
+                <a
+                  href={`mailto:${EMAIL}`}
+                  className={`w-fit break-all rounded-md text-2xl font-semibold tracking-tight text-foreground underline decoration-foreground/30 underline-offset-8 transition-colors duration-300 hover:decoration-foreground md:text-3xl ${FOCUS}`}
+                  style={HEADING}
                 >
-                  <ArrowUpRight size={14} strokeWidth={2} aria-hidden />
-                </span>
-              </button>
-              <p aria-live="polite" className="font-pixel text-xs text-muted-foreground">
-                {formState === 'missing'
-                  ? 'add a message first'
-                  : formState === 'sent'
-                    ? 'opening your mail app. or call me, below'
-                    : 'usually within a day'}
-              </p>
+                  {EMAIL}
+                </a>
+                <p className="mt-1 max-w-md text-sm leading-relaxed text-muted-foreground md:text-base">
+                  Collaborations, questions, or just a hello. I’m always up for a good idea.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <p data-reveal className={LABEL}>
+                  Or find me here
+                </p>
+                <Socials />
+              </div>
             </div>
-          </form>
+
+            {/* right: the form */}
+            <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-6">
+              <div data-reveal className="flex flex-col gap-2">
+                <label htmlFor="c-name" className={LABEL}>
+                  Name
+                </label>
+                <Input
+                  id="c-name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Enter your name"
+                  className={FIELD}
+                />
+              </div>
+
+              <div data-reveal className="flex flex-col gap-2">
+                <label htmlFor="c-email" className={LABEL}>
+                  Email
+                </label>
+                <Input
+                  id="c-email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="your@email.com"
+                  className={FIELD}
+                />
+              </div>
+
+              <div data-reveal className="flex flex-col gap-2">
+                <label htmlFor="c-msg" className={LABEL}>
+                  Message
+                </label>
+                <Textarea
+                  id="c-msg"
+                  name="message"
+                  rows={5}
+                  required
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder="Tell me about your project or idea..."
+                  className={`${FIELD} h-auto min-h-22 resize-none py-3`}
+                />
+              </div>
+
+              <div data-reveal className="flex flex-wrap items-center gap-x-6 gap-y-4">
+                <button type="submit" disabled={sendState === 'sending'} className={`group ${BTN_PRIMARY}`}>
+                  {sendState === 'sending' ? (
+                    <>
+                      <span
+                        aria-hidden
+                        className="size-4 animate-spin rounded-full border-2 border-background/30 border-t-background motion-reduce:animate-none"
+                      />
+                      Sending
+                    </>
+                  ) : sendState === 'sent' ? (
+                    'Message sent'
+                  ) : (
+                    <>
+                      Send message
+                      <span aria-hidden className="relative block size-4 overflow-hidden">
+                        <ArrowUpRight
+                          size={16}
+                          strokeWidth={1.5}
+                          className="transition-transform duration-500 ease-out group-hover:-translate-y-5 group-hover:translate-x-5 motion-reduce:transition-none"
+                        />
+                        <ArrowUpRight
+                          size={16}
+                          strokeWidth={1.5}
+                          className="absolute inset-0 -translate-x-5 translate-y-5 transition-transform duration-500 ease-out group-hover:translate-x-0 group-hover:translate-y-0 motion-reduce:transition-none"
+                        />
+                      </span>
+                    </>
+                  )}
+                </button>
+                <p aria-live="polite" className="text-sm text-muted-foreground">
+                  {sendState === 'sent'
+                    ? 'Thanks, I’ll get back to you soon.'
+                    : sendState === 'error'
+                      ? 'Something went wrong. Try again, or email me directly.'
+                      : 'Typically responds within 48 hours.'}
+                </p>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
 
-      <section ref={stageRef} className="relative z-10 mt-28 md:mt-44">
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-5 px-6 pb-10 text-center md:pb-14">
-          <p data-reveal className="flex items-center gap-2 font-pixel text-xs text-muted-foreground">
-            {!off && <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-primary" />}
-            {hint}
-          </p>
+      {/* -------------------------------------------------------------- */}
+      {/* The phone                                                        */}
+      {/* -------------------------------------------------------------- */}
+      <section ref={stageRef} id="call" className="relative w-full border-t border-border pt-12 md:pt-20">
+        <div className="mx-auto w-full max-w-360 px-4 md:px-8">
+          <SectionHead
+            title="Or call"
+            note="It’s a rotary phone, so be patient."
+            aside={
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                {!off && <span aria-hidden className="size-1.5 animate-pulse rounded-full bg-foreground" />}
+                {hint}
+              </p>
+            }
+          />
+        </div>
 
+        <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 px-4 pb-10 text-center md:pb-14">
           <div
             data-reveal
             aria-live="polite"
             aria-label={off ? `Dialled ${number || 'nothing yet'}` : 'Phone on the hook'}
-            className="flex min-h-[1.1em] items-center justify-center font-display font-soft text-[clamp(2.25rem,7vw,5.25rem)] leading-none tracking-[-0.04em] tabular-nums"
+            className="flex min-h-[1.1em] items-center justify-center text-4xl font-semibold leading-none tracking-tight tabular-nums md:text-6xl"
+            style={HEADING}
           >
             {off ? (
               Array.from({ length: 10 }, (_, i) => (
@@ -818,38 +1116,38 @@ export default function ContactPage() {
                 </span>
               ))
             ) : (
-              <span className="italic text-muted-foreground/70">pick up the phone</span>
+              <span className="text-muted-foreground/70">Pick up the phone</span>
             )}
           </div>
 
-          <div data-reveal className="flex min-h-10 flex-wrap items-center justify-center gap-2">
+          <div data-reveal className="flex min-h-11 flex-wrap items-center justify-center gap-2">
             {status === 'connected' && (
               <>
                 <a
                   href="https://wa.me/27780345709"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`${pill} bg-primary text-primary-foreground hover:bg-foreground hover:text-background`}
+                  className={BTN_PRIMARY}
                 >
-                  open whatsapp
+                  Open WhatsApp
                   <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden />
                 </a>
-                <a href="tel:+27780345709" className={pillSoft}>
-                  call
+                <a href="tel:+27780345709" className={BTN_MUTED}>
+                  Call
                 </a>
               </>
             )}
             {status === 'idle' && off && number.length > 0 && (
-              <button type="button" onClick={clearNumber} className={pillSoft}>
-                clear
+              <button type="button" onClick={clearNumber} className={BTN_MUTED}>
+                Clear
               </button>
             )}
             {status === 'idle' && off && number.length === 0 && (
-              <span className="font-pixel text-xs text-muted-foreground/70">psst, try 078 034 5709</span>
+              <span className="text-sm text-muted-foreground/70">Psst, try 078 034 5709</span>
             )}
             {off && (
-              <button type="button" onClick={() => toggleHandset(false)} className={pillSoft}>
-                hang up
+              <button type="button" onClick={() => toggleHandset(false)} className={BTN_MUTED}>
+                Hang up
               </button>
             )}
             <button
@@ -860,12 +1158,12 @@ export default function ContactPage() {
                 sfx.init();
                 setSound((s) => !s);
               }}
-              className={`grid size-10 place-items-center rounded-full bg-muted text-foreground transition-colors duration-200 hover:bg-foreground hover:text-background ${focus}`}
+              className={`grid size-11 place-items-center rounded-xl bg-muted text-foreground transition-colors duration-200 hover:bg-foreground hover:text-background ${FOCUS}`}
             >
               {sound ? (
-                <Volume2 size={15} strokeWidth={1.5} aria-hidden />
+                <Volume2 size={16} strokeWidth={1.5} aria-hidden />
               ) : (
-                <VolumeX size={15} strokeWidth={1.5} aria-hidden />
+                <VolumeX size={16} strokeWidth={1.5} aria-hidden />
               )}
             </button>
           </div>
@@ -882,12 +1180,12 @@ export default function ContactPage() {
           >
             <svg
               viewBox={`${VB.x} ${VB.y} ${VB.w} ${VB.h}`}
-              className="block h-auto w-full"
+              className="block h-auto -mt-22 w-full"
               role="img"
               aria-label="A big dome-shaped rotary telephone"
             >
               <g ref={phoneRef}>
-                <path d={BODY} transform="translate(14 14)" className="fill-foreground" />
+                <path d={BODY_PATH} transform="translate(14 14)" className="fill-foreground" />
 
                 <path ref={cordRef} d={cordPath(0)} fill="none" strokeWidth="9" strokeLinecap="round" className="stroke-foreground" />
                 <path
@@ -899,7 +1197,7 @@ export default function ContactPage() {
                   className="stroke-card"
                 />
 
-                <path d={BODY} strokeWidth="3" className="fill-primary stroke-foreground" />
+                <path d={BODY_PATH} strokeWidth="3" className="fill-primary stroke-foreground" />
                 <path d={PLINTH} className="fill-foreground" />
 
                 <path d={arc(498, -86, 86)} fill="none" strokeWidth="2" className="stroke-foreground/20" />
@@ -927,7 +1225,7 @@ export default function ContactPage() {
                   className={`stroke-foreground transition-colors duration-300 ${off ? 'fill-card' : 'fill-foreground'}`}
                 />
                 <circle cx="900" cy="474" r="6" className="fill-primary" />
-                <text x="900" y="522" textAnchor="middle" dominantBaseline="central" fontSize="18" className="fill-primary-foreground font-pixel">
+                <text x="900" y="522" textAnchor="middle" dominantBaseline="central" fontSize="18" style={svgText} className="fill-primary-foreground">
                   line
                 </text>
 
@@ -936,7 +1234,7 @@ export default function ContactPage() {
                 {DIGITS.map((d) => {
                   const p = polar(R_HOLES, holeAngle(d));
                   return (
-                    <text key={d} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="40" className="fill-card font-pixel">
+                    <text key={d} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="40" style={svgText} className="fill-card">
                       {d}
                     </text>
                   );
@@ -954,10 +1252,10 @@ export default function ContactPage() {
 
                 <circle cx={C.x} cy={C.y} r="66" strokeWidth="2.5" className="fill-primary stroke-foreground" />
                 <circle cx={C.x} cy={C.y} r="54" fill="none" strokeWidth="1.5" className="stroke-foreground/30" />
-                <text x={C.x} y={C.y - 8} textAnchor="middle" dominantBaseline="central" fontSize="22" className="fill-primary-foreground font-pixel">
+                <text x={C.x} y={C.y - 8} textAnchor="middle" dominantBaseline="central" fontSize="22" style={svgText} className="fill-primary-foreground">
                   say
                 </text>
-                <text x={C.x} y={C.y + 16} textAnchor="middle" dominantBaseline="central" fontSize="22" className="fill-primary-foreground font-pixel">
+                <text x={C.x} y={C.y + 16} textAnchor="middle" dominantBaseline="central" fontSize="22" style={svgText} className="fill-primary-foreground">
                   hi
                 </text>
 

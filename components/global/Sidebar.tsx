@@ -11,6 +11,7 @@ import gsap from 'gsap';
 const NAV = [
   { name: 'home', href: '/', bg: 'var(--primary)' },
   { name: 'about', href: '/about', bg: '#8FB8FF' },
+  { name: 'labs', href: '/labs', bg: '#d48fff' },
   { name: 'works', href: '/works', bg: '#FF8FA3' },
   { name: 'contact', href: '/contact', bg: '#7ED492' },
 ];
