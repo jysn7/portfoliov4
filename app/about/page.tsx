@@ -985,7 +985,6 @@ export default function AboutPage() {
               Start a project
               <ArrowUpRight size={14} strokeWidth={1.75} aria-hidden />
             </Link>
-            <CopyEmail />
             <a href="/cv.pdf" download className={BTN_MUTED}>
               <Download size={14} strokeWidth={1.75} aria-hidden />
               Download CV

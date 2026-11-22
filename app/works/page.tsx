@@ -654,7 +654,7 @@ function CaseBody({
       <header className="pt-10 md:pt-14">
         <p data-cs className="flex flex-wrap items-center gap-3">
           {c.category && (
-            <span className="rounded-xl border border-border px-3 py-1 text-xs text-foreground">{c.category}</span>
+            <span className="rounded-xl border border-primary bg-primary px-3 py-1 text-xs text-background font-semibold">{c.category}</span>
           )}
           {c.year != null && <span className="text-xs text-muted-foreground">{c.year}</span>}
         </p>
@@ -665,7 +665,7 @@ function CaseBody({
         >
           {c.title}
         </h2>
-        <p data-cs className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
+        <p data-cs className="mt-5 max-w-3xl text-base leading-relaxed text-muted-foreground md:text-lg">
           {c.description}
         </p>
 
@@ -700,7 +700,7 @@ function CaseBody({
         >
           <p className={`mb-4 ${LABEL}`}>Contents</p>
           <nav>
-            <ul className="space-y-1">
+            <ul className="space-y-0.5">
               {sections.map((s) => (
                 <li key={s.id}>
                   <button
@@ -709,11 +709,11 @@ function CaseBody({
                     data-toc-id={s.id}
                     data-active={s.id === activeIdRef.current ? 'true' : 'false'}
                     onClick={() => scrollToSection(s.id)}
-                    className={`group flex w-full items-center gap-2 rounded-md py-1 text-left text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground data-[active=true]:text-foreground ${FOCUS}`}
+                    className={`group relative flex w-full items-center gap-3 rounded-md py-1.5 pl-3 pr-2 text-left text-sm text-muted-foreground transition-colors duration-300 hover:text-foreground data-[active=true]:text-foreground ${FOCUS}`}
                   >
                     <span
                       aria-hidden
-                      className="h-px w-4 bg-muted-foreground/40 transition-all duration-300 group-data-[active=true]:w-8 group-data-[active=true]:bg-foreground"
+                      className="absolute inset-y-0 left-0 w-0.5 origin-top scale-y-0 rounded-full bg-primary transition-transform duration-300 group-data-[active=true]:scale-y-100"
                     />
                     {s.label}
                   </button>
@@ -740,7 +740,7 @@ function CaseBody({
               <Title>Overview</Title>
               <div data-cs className="space-y-5">
                 {overview.map((p, k) => (
-                  <p key={k} className="max-w-2xl text-base leading-relaxed text-foreground md:text-lg">
+                  <p key={k} className="max-w-4xl text-base leading-relaxed text-foreground md:text-lg">
                     {p}
                   </p>
                 ))}

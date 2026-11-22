@@ -57,50 +57,57 @@ export const FEATURED: CaseView[] = [
     category: 'web',
     year: 2026,
     description:
-      'A management platform for a golf academy: bookings, coaching schedules and student progress in one place, built with the student team I lead.',
-    tags: ['Next.js', 'Supabase', 'Tailwind', 'Stripe'],
-    image: '/new-work/tyga-home.png',
+      'A full academy operations platform for a youth golf academy — enrolments, scheduling, billing, coaching, memberships and compliance in one system, led end to end by a five-person student team.',
+    tags: [
+      'Next.js',
+      'Supabase',
+      'PostgreSQL',
+      'Paystack',
+      'Tailwind',
+      'TypeScript',
+    ],
+    image: '/new-work/tyga-vid.mp4',
 
-    role: 'Lead developer & designer',
+    role: 'Project manager, lead developer & designer',
     client: 'TYGA Golf Academy',
-    timeline: '10 weeks',
+    timeline: '15 weeks · 5-person team',
     status: 'Live',
 
     overview: [
-      'TYGA (The Youth Golf Academy) ran their entire operation out of WhatsApp, a paper diary and three separate spreadsheets. Coaches double-booked slots, parents chased confirmations, and no one could answer “how is my child progressing?” without digging through notebooks.',
-      'They needed one place where a coach could see their day, a parent could book and pay, and an admin could see the health of the academy at a glance, without adding a full-time operator to the payroll.',
+      'TYGA runs four-stage junior golf programmes across multiple venues with around 30 juniors, four coaches and two admin staff — all managed on WhatsApp, a paper diary and three spreadsheets. The brief was to replace that entire operational backbone with one system: a coach could use it from the range, a parent to pay and track progress, and an admin to run the business.',
+      'I owned the project from scoping with the academy owner and programme director, through design in Figma, to authoring the full PostgreSQL schema and shipping the parent, coach and admin portals against live academy data.',
     ],
     highlights: [
       {
-        title: 'One schedule, everyone in sync',
-        text: 'Coaches, students and admins see the same live calendar. Bookings and cancellations propagate through Supabase realtime channels, so no two people can claim the same slot.',
+        title: 'One schema, three portals, strict boundaries',
+        text: 'A marketing site, parent portal, coach portal and admin console share a single Supabase backend with row-level security on every table. Access control lives in the database, not just the UI, so it holds even if the app layer is bypassed.',
       },
       {
-        title: 'Progress that a parent can read',
-        text: 'Each session produces a short structured note covering skill focus, drills and next steps. Parents get a clean timeline per child instead of a WhatsApp thread.',
+        title: 'Domain rules enforced server-side',
+        text: 'Assessment-gated level placement, milestone-gated progression, live capacity and coaching-ratio checks, and membership gating are all enforced in Postgres functions — not hidden in buttons. A coach who tries to promote a child too early is told exactly which criteria are unmet.',
       },
       {
-        title: 'Payments without an ops team',
-        text: 'Stripe-backed booking, invoice generation and monthly statements roll up automatically. Admins see outstanding balances at a glance and parents get reminders.',
+        title: 'Billing that handles the real cases',
+        text: 'Paystack card checkout, admin-recorded EFT and cash payments, a discount engine with automatic, promotional and admin-granted rules, and a refund review queue for paid enrolments that withdraw. Payment webhooks are idempotent so retries never duplicate money.',
       },
       {
         title: 'Built for the coach on the range',
-        text: 'The session-note flow is one screen, keyboard-friendly, and works on a phone with one hand while holding a bucket of balls in the other.',
+        text: 'Attendance is one tap per child with a bulk-mark option for the full roster. Session notes are a single screen. The parent dashboard surfaces what needs attention — an unpaid invoice, a waitlist place, a pending assessment — instead of a wall of data.',
       },
       {
-        title: 'Figma first, then shipped',
-        text: 'Every screen was designed and reviewed in Figma with the academy owner before a line of code was written. The wireframes still drive new features today.',
+        title: 'Compliance and operational health from day one',
+        text: 'POPIA-shaped tooling built in: six categories of parental consent per child, logged access to sensitive fields, parent-initiated data export, and an anonymisation cascade that preserves financial records while removing personal data. An admin dashboard runs 18 named checks for things that are quietly broken — unindexed foreign keys, stuck payments, staff without MFA, stale scheduled jobs.',
       },
     ],
     challenge:
-      'Replace four tools with one without forcing the academy to close for a week to migrate. Every screen had to be learnable in five minutes by someone who does not enjoy software.',
+      'Replace a working academy\'s entire operational backbone without closing it for a week to migrate, learnable in five minutes by people who do not enjoy software, compliant with children\'s data regulations from day one, and built by a small student team on an academic deadline — which meant the architecture had to be simple enough for teammates to contribute safely and strict enough that a single missed authorisation check could not expose another family\'s data.',
     solution:
-      'We shipped a thin slice first, bookings and session notes, and ran it in parallel with their old process for two weeks before turning off the spreadsheets once the data matched. Payments and reporting followed in a second slice, so nothing had to be learned all at once.',
+      'We shipped in dependency-ordered slices, each validated independently before the next began, with every slice running in parallel to the academy\'s old process until the data matched. Memberships, discounts, waitlists and support were added as a later slice once the enrolment and payment loop was live and those gaps surfaced in real use. The full schema was designed up front so new capabilities meant new functions and new UI, not new migrations.',
     results: [
-      { value: '−72%', label: 'admin time per week' },
-      { value: '3×', label: 'faster parent responses' },
-      { value: '0', label: 'double-bookings since launch' },
-      { value: '312', label: 'sessions logged in month one' },
+      { value: '65', label: 'tables, RLS on every one' },
+      { value: '200+', label: 'server-side functions enforcing domain rules' },
+      { value: '3', label: 'user portals shipped against live data' },
+      { value: '0', label: 'manual reconciliations for card payments' },
     ],
     gallery: [
       '/new-work/tyga-auth.png',
@@ -168,7 +175,7 @@ export const FEATURED: CaseView[] = [
       '/new-work/izakhiwo/shop.png',
       '/new-work/izakhiwo/mobile.png',
     ],
-    href: "https://izakhiworenovations.co.za",
+    href: 'https://izakhiworenovations.co.za',
     repo: undefined,
   },
 
@@ -202,7 +209,7 @@ export const FEATURED: CaseView[] = [
       },
       {
         title: 'The collection and the products',
-        text: 'A collection section sets the tone of the range, and an “our products” section lets people look at individual pieces.',
+        text: 'A collection section sets the tone of the range, and an "our products" section lets people look at individual pieces.',
       },
       {
         title: 'Six sections, one clear path',
@@ -229,7 +236,7 @@ export const FEATURED: CaseView[] = [
       '/new-work/sirl/mobile.png',
       '/new-work/sirl/contact.png',
     ],
-    href: "https://sirl-jewels.vercel.app",
+    href: 'https://sirl-jewels.vercel.app',
     repo: undefined,
   },
 
@@ -291,7 +298,7 @@ export const FEATURED: CaseView[] = [
       '/new-work/mono/mono-contact.png',
       '/new-work/mono/mono-code.png',
     ],
-    href: "https://monostudios.co.z5",
+    href: 'https://monostudios.co.z5',
     repo: undefined,
   },
 
@@ -312,7 +319,7 @@ export const FEATURED: CaseView[] = [
     status: 'Live',
 
     overview: [
-      'Canvas is a self-contained template for painters, muralists and small studios who want their work to breathe on the screen. The goal from the first sketch was to strip away everything that competes with the painting: no hero carousels, no “about our process” fluff, and no cookie banners fighting the art for attention.',
+      'Canvas is a self-contained template for painters, muralists and small studios who want their work to breathe on the screen. The goal from the first sketch was to strip away everything that competes with the painting: no hero carousels, no "about our process" fluff, and no cookie banners fighting the art for attention.',
       'What is left is a quiet, gallery-first site where every page is designed around a single piece, and the interface stays out of the way while still feeling considered.',
     ],
     highlights: [
@@ -326,11 +333,11 @@ export const FEATURED: CaseView[] = [
       },
       {
         title: 'A CMS that keeps the design intact',
-        text: 'A custom Sanity schema for “painting” covers upload, title, medium, price and a sold flag. There are no layout controls, so the template can never drift away from its design.',
+        text: 'A custom Sanity schema for "painting" covers upload, title, medium, price and a sold flag. There are no layout controls, so the template can never drift away from its design.',
       },
       {
         title: 'Enquiries that land somewhere',
-        text: 'A single, quiet “commission this” link on each piece opens a mail draft pre-filled with the title and dimensions, so there is nothing else to fill in.',
+        text: 'A single, quiet "commission this" link on each piece opens a mail draft pre-filled with the title and dimensions, so there is nothing else to fill in.',
       },
       {
         title: 'Quiet motion, not motion as brand',
@@ -384,7 +391,7 @@ export const FEATURED: CaseView[] = [
       },
       {
         title: 'Auth that does not feel like auth',
-        text: 'Clerk handles sign-in, sessions and account settings, so the only thing a new writer sees is a “start writing” button and there is no custom login UI to maintain.',
+        text: 'Clerk handles sign-in, sessions and account settings, so the only thing a new writer sees is a "start writing" button and there is no custom login UI to maintain.',
       },
       {
         title: 'Likes and shares that mean something',

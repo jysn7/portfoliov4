@@ -355,7 +355,6 @@ export default function ContactPage() {
         const masks = gsap.utils.toArray<HTMLElement>('[data-mask]', hero);
         const subs = gsap.utils.toArray<HTMLElement>('[data-hero-sub]', hero);
         const morph = hero.querySelector<HTMLElement>('[data-morph]');
-        const glow = hero.querySelector<HTMLElement>('[data-glow]');
         const burstLayer = hero.querySelector<HTMLElement>('[data-burst-layer]');
 
         /* ---------- hero entrance: heading letters, then the line ---------- */
@@ -487,13 +486,9 @@ export default function ContactPage() {
         hero.addEventListener('click', onHeroClick);
         cleanups.push(() => hero.removeEventListener('click', onHeroClick));
 
-        /* ---------- mouse only: heading wave + a soft glow that follows the pointer ---------- */
+        /* ---------- mouse only: heading wave + social flipbook ---------- */
         if (hover) {
           const charY = chars.map((c) => gsap.quickTo(c, 'y', { duration: 0.45, ease: 'power3' }));
-
-          if (glow) gsap.set(glow, { xPercent: -50, yPercent: -50, autoAlpha: 0 });
-          const glowX = glow ? gsap.quickTo(glow, 'x', { duration: 0.6, ease: 'power3' }) : null;
-          const glowY = glow ? gsap.quickTo(glow, 'y', { duration: 0.6, ease: 'power3' }) : null;
 
           const onMove = (e: PointerEvent) => {
             chars.forEach((c, i) => {
@@ -502,28 +497,14 @@ export default function ContactPage() {
               const dy = e.clientY - (r.top + r.height / 2);
               charY[i](-8 * Math.exp(-(dx * dx + dy * dy) / (2 * 90 * 90)));
             });
-            if (glow && glowX && glowY) {
-              const r = hero.getBoundingClientRect();
-              glowX(e.clientX - r.left);
-              glowY(e.clientY - r.top);
-            }
-          };
-          const onEnter = (e: PointerEvent) => {
-            if (!glow) return;
-            const r = hero.getBoundingClientRect();
-            gsap.set(glow, { x: e.clientX - r.left, y: e.clientY - r.top });
-            gsap.to(glow, { autoAlpha: 1, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
           };
           const onLeave = () => {
             gsap.to(chars, { y: 0, duration: 0.8, ease: 'elastic.out(1, 0.5)', overwrite: 'auto' });
-            if (glow) gsap.to(glow, { autoAlpha: 0, duration: 0.6, ease: 'power3.out', overwrite: 'auto' });
           };
           hero.addEventListener('pointermove', onMove);
-          hero.addEventListener('pointerenter', onEnter);
           hero.addEventListener('pointerleave', onLeave);
           cleanups.push(() => {
             hero.removeEventListener('pointermove', onMove);
-            hero.removeEventListener('pointerenter', onEnter);
             hero.removeEventListener('pointerleave', onLeave);
           });
 
@@ -889,25 +870,13 @@ export default function ContactPage() {
         className="relative flex w-full flex-col items-center justify-center px-4 mt-12 md:mt-32 text-center"
         style={{ minHeight: HERO_HEIGHT }}
       >
-        {/* soft glow that follows the pointer (mouse only) */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div
-            data-glow
-            className="invisible absolute left-0 top-0 size-104 rounded-full"
-            style={{
-              background:
-                'radial-gradient(circle, color-mix(in srgb, var(--primary) 22%, transparent), transparent 65%)',
-            }}
-          />
-        </div>
-
         {/* click bursts land here */}
         <div data-burst-layer aria-hidden className="pointer-events-none absolute inset-0 z-20 overflow-hidden" />
 
         <div data-hero-content className="relative z-10 flex flex-col items-center will-change-transform">
           <h1
             aria-label={HERO_TEXT}
-            className="mx-auto max-w-xl text-3xl font-semibold tracking-tight text-foreground md:text-5xl"
+            className="mx-auto max-w-xl text-2xl font-semibold tracking-tight text-foreground md:text-xl"
             style={HEADING}
           >
             {HERO_TEXT.split(' ').map((word, w, words) => (
