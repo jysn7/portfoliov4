@@ -2,15 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import gsap from "gsap";
-import { Inter_Tight } from "next/font/google";
+import { Courier_Prime, Inter_Tight } from "next/font/google";
 
 /* -------------------------------------------------------------------------- */
-/*  Font (free, Google Fonts via next/font, self-hosted at build time)        */
+/*  Fonts (free, Google Fonts via next/font, self-hosted at build time)       */
 /* -------------------------------------------------------------------------- */
 
 const display = Inter_Tight({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const mono = Courier_Prime({
+  subsets: ["latin"],
+  weight: ["400", "700"],
   display: "swap",
 });
 
@@ -22,33 +28,37 @@ const ROLES = [
   "Software Engineer",
   "CS Student",
   "Web Developer",
-  "Screenwriter",
   "Data & AI Builder",
 ];
 
 const FIRST = "Jayson";
 const NAME = `${FIRST} Baloyi`;
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz&/<>_";
-const AUTO_DELAY = 4;
 
-type CmdId = "zerog" | "shatter" | "dissolve" | "glitch" | "warp" | "draw" | "lights";
+// The big stacked word, and how blurred each letter is (a fraction of the font size).
+const WORD = ["portf", "olio"];
+const BLUR = [
+  [0.032, 0.024, 0.008, 0.003, 0],
+  [0.032, 0.024, 0.01, 0.045],
+];
+
+type CmdId = "zerog" | "dissolve" | "glitch" | "warp" | "draw" | "lights";
 
 type Command = { id: CmdId; label: string; hint: string; keys: string[]; reply: string };
 
 const COMMANDS: Command[] = [
   { id: "zerog", label: "Zero gravity", hint: "Letters float and drift", keys: ["zero gravity", "zero g", "zero", "gravity", "float", "space", "drift", "weightless"], reply: "Weightless. Move through it." },
-  { id: "shatter", label: "Shatter", hint: "The page cracks like glass", keys: ["shatter", "glass", "crack", "break", "smash"], reply: "Handle with care." },
-  { id: "dissolve", label: "Dissolve", hint: "The name turns to particles", keys: ["dissolve", "disintegrate", "particle", "scatter", "dust"], reply: "Dissolving." },
+  { id: "dissolve", label: "Dissolve", hint: "The text turns to particles", keys: ["dissolve", "disintegrate", "particle", "scatter", "dust"], reply: "Dissolving." },
   { id: "glitch", label: "Glitch", hint: "RGB split and scanlines", keys: ["glitch", "rgb", "static", "corrupt", "error"], reply: "Signal lost." },
   { id: "warp", label: "Warp", hint: "Jump to hyperspace", keys: ["warp", "hyperspace", "stars", "starfield", "speed"], reply: "Jumping to hyperspace." },
   { id: "draw", label: "Draw", hint: "Your cursor becomes ink", keys: ["draw", "paint", "brush", "ink", "sketch", "doodle"], reply: "Draw on the page." },
-  { id: "lights", label: "Lights out", hint: "Find the name with a torch", keys: ["lights out", "lights", "dark", "torch", "flashlight", "light"], reply: "Find the light." },
+  { id: "lights", label: "Lights out", hint: "Find the text with a torch", keys: ["lights out", "lights", "dark", "torch", "flashlight", "light"], reply: "Find the light." },
 ];
 
 const PLACEHOLDERS = [
   "Pick an effect…",
   "Try “warp”…",
-  "Say “shatter”…",
+  "Say “dissolve”…",
   "Type “lights out”…",
   "Try “draw”…",
   "Ask for “glitch”…",
@@ -94,9 +104,35 @@ type Mode = { ttl: number; stop: (done: () => void) => void; dispose: () => void
 type Api = {
   run: (id: CmdId) => void;
   unknown: (text: string) => void;
-  pause: (paused: boolean) => void;
   end: () => void;
 };
+
+/* -------------------------------------------------------------------------- */
+/*  Split text into masked letters (every effect works on these)              */
+/*  blur = per-letter blur as a fraction of the font size                     */
+/*  dim  = letters from this index on are slightly lighter                    */
+/* -------------------------------------------------------------------------- */
+
+function Chars({ text, blur, dim = Infinity }: { text: string; blur?: number[]; dim?: number }) {
+  return (
+    <>
+      {text.split("").map((ch, i) => (
+        <span
+          key={i}
+          data-mask
+          aria-hidden="true"
+          className={`-mx-[0.05em] -mb-[0.2em] -mt-[0.1em] inline-block overflow-hidden px-[0.05em] pb-[0.2em] pt-[0.1em] align-bottom ${
+            i < dim ? "text-foreground" : "text-foreground/70"
+          }`}
+        >
+          <span data-char data-blur={blur?.[i]} className="inline-block will-change-transform">
+            {ch === " " ? "\u00A0" : ch}
+          </span>
+        </span>
+      ))}
+    </>
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /*  Component                                                                 */
@@ -105,9 +141,7 @@ type Api = {
 export default function Hero() {
   const rootRef = useRef<HTMLElement>(null);
   const driftRef = useRef<HTMLDivElement>(null);
-  const nameRef = useRef<HTMLHeadingElement>(null);
-  const titleRef = useRef<HTMLSpanElement>(null);
-  const subRef = useRef<HTMLParagraphElement>(null);
+  const wordRef = useRef<HTMLHeadingElement>(null);
   const promptRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const replyRef = useRef<HTMLParagraphElement>(null);
@@ -198,37 +232,36 @@ export default function Hero() {
   useEffect(() => {
     const root = rootRef.current;
     const drift = driftRef.current;
-    const h1 = nameRef.current;
-    const titleEl = titleRef.current;
-    const sub = subRef.current;
+    const word = wordRef.current;
     const promptEl = promptRef.current;
     const input = inputRef.current;
     const reply = replyRef.current;
     const fx = fxRef.current;
     const bg = bgRef.current;
-    if (!root || !drift || !h1 || !titleEl || !sub || !promptEl || !input || !reply || !fx || !bg) return;
+    if (!root || !drift || !word || !promptEl || !input || !reply || !fx || !bg) return;
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     let dead = false;
-
-    // shards are clones of the content: drop the expensive blur on them
-    const shardStyle = document.createElement("style");
-    shardStyle.textContent = "[data-shard] *{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}";
-    document.head.appendChild(shardStyle);
 
     const ctx = gsap.context(() => {
       const masks = gsap.utils.toArray<HTMLElement>("[data-mask]", root);
       const chars = gsap.utils.toArray<HTMLElement>("[data-char]", root);
       const letters = masks.filter((m) => m.textContent?.trim());
 
-      let fontPx = parseFloat(getComputedStyle(h1).fontSize) || 64;
-      let current = 0;
-      let busy = false;
-      let held = false;
+      // per-letter metrics
+      const baseBlur = chars.map((c) => (c.dataset.blur ? parseFloat(c.dataset.blur) : 0));
+      let fontPx = parseFloat(getComputedStyle(word).fontSize) || 120;
+      let sizes = chars.map((c) => parseFloat(getComputedStyle(c).fontSize) || 12);
+      const blurPx = (i: number) => baseBlur[i] * fontPx;
+      const applyBlur = () => {
+        chars.forEach((c, i) => {
+          if (baseBlur[i] > 0) gsap.set(c, { filter: `blur(${blurPx(i)}px)` });
+        });
+      };
+      applyBlur();
+
       let ready = reduced;
-      let cycle: gsap.core.Tween | null = null;
-      let titleTween: gsap.core.Tween | null = null;
       let replyTween: gsap.core.Tween | null = null;
       let phTween: gsap.core.Tween | null = null;
       let phCall: gsap.core.Tween | null = null;
@@ -267,7 +300,7 @@ export default function Hero() {
         });
       };
 
-      /* ---------- character scramble (title, reply, placeholder) ---------- */
+      /* ---------- character scramble (reply, placeholder) ---------- */
       const scramble = (
         get: () => string,
         set: (s: string) => void,
@@ -313,45 +346,10 @@ export default function Hero() {
         );
       };
 
-      /* ---------- role cycle ---------- */
-      const go = (next: number) => {
-        if (busy) return;
-        busy = true;
-        titleTween?.kill();
-        titleTween = scramble(
-          () => titleEl.textContent ?? "",
-          (s) => {
-            titleEl.textContent = s;
-          },
-          ROLES[next],
-          1.2
-        );
-        current = next;
-        gsap.delayedCall(1.2, () => {
-          busy = false;
-        });
-      };
-
-      const restart = () => {
-        cycle?.kill();
-        if (reduced) return;
-        cycle = gsap.delayedCall(AUTO_DELAY, () => {
-          go((current + 1) % ROLES.length);
-          restart();
-        });
-        if (held) cycle.pause();
-      };
-
-      const step = (dir: 1 | -1) => {
-        if (busy) return;
-        go((current + dir + ROLES.length) % ROLES.length);
-        restart();
-      };
-
       /* ====================================================================== */
       /*  ZERO GRAVITY                                                          */
       /*  Letters detach and drift, spinning slowly. The cursor repels them,    */
-      /*  walls bounce them, and they glide back into the name at the end.      */
+      /*  walls bounce them, and they glide back into place at the end.         */
       /* ====================================================================== */
       const zerog = (): Mode => {
         const rr = root.getBoundingClientRect();
@@ -452,194 +450,9 @@ export default function Hero() {
       };
 
       /* ====================================================================== */
-      /*  SHATTER                                                               */
-      /*  Cracks spread from the send button, the page splits into shards,      */
-      /*  they tilt and fall, then fly back together.                           */
-      /* ====================================================================== */
-      const shatter = (): Mode => {
-        const { c, w, h } = prep(fx);
-        const rr = root.getBoundingClientRect();
-        const color = fg();
-        const anchor =
-          (promptEl.querySelector("button[type='submit']") as HTMLElement | null) ?? promptEl;
-        const ar = anchor.getBoundingClientRect();
-        const P = { x: ar.left - rr.left + ar.width / 2, y: ar.top - rr.top + ar.height / 2 };
-        const maxD = Math.max(
-          Math.hypot(P.x, P.y),
-          Math.hypot(w - P.x, P.y),
-          Math.hypot(P.x, h - P.y),
-          Math.hypot(w - P.x, h - P.y)
-        );
-
-        // radial + ring vertex grid with jitter -> glass-like cells
-        const S = 12;
-        const RINGS = [0, 0.1, 0.24, 0.45, 0.78, 1.45];
-        const V = RINGS.map((k, ki) =>
-          Array.from({ length: S }, (_, j) => {
-            if (ki === 0) return { x: P.x, y: P.y };
-            const th = ((j + (Math.random() - 0.5) * 0.55) / S) * Math.PI * 2 + 0.2;
-            const rad = k * maxD * (1 + (Math.random() - 0.5) * 0.22);
-            return { x: P.x + Math.cos(th) * rad, y: P.y + Math.sin(th) * rad };
-          })
-        );
-
-        type Pt = { x: number; y: number };
-        const polys: Pt[][] = [];
-        const edges: { x1: number; y1: number; x2: number; y2: number; d: number }[] = [];
-        const addEdge = (a: Pt, b: Pt) =>
-          edges.push({
-            x1: a.x,
-            y1: a.y,
-            x2: b.x,
-            y2: b.y,
-            d: Math.min(Math.hypot(a.x - P.x, a.y - P.y), Math.hypot(b.x - P.x, b.y - P.y)),
-          });
-        for (let k = 0; k < RINGS.length - 1; k++) {
-          for (let j = 0; j < S; j++) {
-            const j2 = (j + 1) % S;
-            const a = V[k][j];
-            const b = V[k][j2];
-            const cc = V[k + 1][j2];
-            const d = V[k + 1][j];
-            polys.push(k === 0 ? [a, cc, d] : [a, b, cc, d]);
-            addEdge(a, d);
-            if (k >= 1) addEdge(a, b);
-          }
-        }
-
-        const holder = document.createElement("div");
-        holder.setAttribute("aria-hidden", "true");
-        Object.assign(holder.style, {
-          position: "absolute",
-          inset: "0",
-          zIndex: "20",
-          pointerEvents: "none",
-          overflow: "hidden",
-        });
-        const paper = getComputedStyle(root).backgroundColor;
-
-        const shards = polys.map((poly) => {
-          const cx = poly.reduce((s, p) => s + p.x, 0) / poly.length;
-          const cy = poly.reduce((s, p) => s + p.y, 0) / poly.length;
-          const dist = Math.hypot(cx - P.x, cy - P.y) || 1;
-          const outer = document.createElement("div");
-          outer.setAttribute("data-shard", "");
-          Object.assign(outer.style, {
-            position: "absolute",
-            inset: "0",
-            pointerEvents: "none",
-            filter: "drop-shadow(0 0 0.6px currentColor)",
-            willChange: "transform",
-            transformOrigin: `${cx}px ${cy}px`,
-          });
-          const inner = document.createElement("div");
-          Object.assign(inner.style, {
-            position: "absolute",
-            inset: "0",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            background: paper,
-            clipPath: `polygon(${poly.map((p) => `${p.x.toFixed(1)}px ${p.y.toFixed(1)}px`).join(",")})`,
-          });
-          inner.appendChild(drift.cloneNode(true));
-          outer.appendChild(inner);
-          holder.appendChild(outer);
-          return { outer, d: dist / maxD, ax: (cx - P.x) / dist, ay: (cy - P.y) / dist };
-        });
-        root.appendChild(holder);
-        gsap.set(drift, { visibility: "hidden" });
-
-        const els = shards.map((s) => s.outer);
-        gsap.set(els, { transformPerspective: 1100 });
-        const tl = gsap.timeline();
-        shards.forEach((s) => {
-          const t0 = 0.3 + s.d * 0.45;
-          tl.to(
-            s.outer,
-            {
-              x: s.ax * 8,
-              y: s.ay * 8,
-              rotationX: rand(-12, 12),
-              rotationY: rand(-12, 12),
-              rotationZ: rand(-2.5, 2.5),
-              duration: 0.3,
-              ease: "power2.out",
-            },
-            t0
-          );
-          tl.to(
-            s.outer,
-            {
-              x: s.ax * rand(20, 90) + rand(-25, 25),
-              y: rand(0.25, 0.6) * h,
-              rotationX: rand(-75, 75),
-              rotationY: rand(-75, 75),
-              rotationZ: rand(-40, 40),
-              duration: rand(1, 1.5),
-              ease: "power2.in",
-            },
-            t0 + 0.3
-          );
-        });
-
-        // cracks spreading from the impact point
-        const crack = { r: 0 };
-        const crackTw = gsap.to(crack, {
-          r: maxD * 1.1,
-          duration: 0.5,
-          ease: "power2.out",
-          onUpdate: () => {
-            c.clearRect(0, 0, w, h);
-            c.strokeStyle = color;
-            c.lineWidth = 1.25;
-            c.lineCap = "round";
-            c.beginPath();
-            for (const e of edges) {
-              if (e.d <= crack.r) {
-                c.moveTo(e.x1, e.y1);
-                c.lineTo(e.x2, e.y2);
-              }
-            }
-            c.stroke();
-          },
-        });
-        const fadeTw = gsap.to(fx, { opacity: 0, duration: 0.35, delay: 0.4 });
-
-        let gone = false;
-        return {
-          ttl: 2.9,
-          stop: (done) => {
-            tl.kill();
-            gsap.to(els, {
-              x: 0,
-              y: 0,
-              rotationX: 0,
-              rotationY: 0,
-              rotationZ: 0,
-              duration: 1.1,
-              ease: "expo.inOut",
-              stagger: { each: 0.008, from: "end" },
-              onComplete: done,
-            });
-          },
-          dispose: () => {
-            if (gone) return;
-            gone = true;
-            tl.kill();
-            crackTw.kill();
-            fadeTw.kill();
-            gsap.killTweensOf(els);
-            holder.remove();
-            gsap.set(drift, { clearProps: "visibility" });
-            wipe(fx);
-          },
-        };
-      };
-
-      /* ====================================================================== */
       /*  DISSOLVE (canvas particles sampled from the real glyphs)              */
+      /*  Big and small text are sampled on separate layers so the small        */
+      /*  mono text keeps enough particles to stay readable.                    */
       /* ====================================================================== */
       const dissolve = (): Mode => {
         const rr = root.getBoundingClientRect();
@@ -649,58 +462,71 @@ export default function Hero() {
         fx.height = Math.round(h * dpr);
         gsap.set(fx, { opacity: 1 });
         const c = fx.getContext("2d");
-        const off = document.createElement("canvas");
-        off.width = fx.width;
-        off.height = fx.height;
-        const o = off.getContext("2d", { willReadFrequently: true });
-        if (!c || !o) throw new Error("canvas unavailable");
+        if (!c) throw new Error("canvas unavailable");
         c.setTransform(dpr, 0, 0, dpr, 0, 0);
-        o.scale(dpr, dpr);
 
-        // sample each glyph with its own computed font (upright first name, italic surname)
-        o.fillStyle = "#000";
-        o.textAlign = "center";
-        o.textBaseline = "alphabetic";
+        const mk = () => {
+          const off = document.createElement("canvas");
+          off.width = fx.width;
+          off.height = fx.height;
+          const o = off.getContext("2d", { willReadFrequently: true });
+          if (!o) throw new Error("canvas unavailable");
+          o.scale(dpr, dpr);
+          o.fillStyle = "#000";
+          o.textAlign = "center";
+          o.textBaseline = "alphabetic";
+          return { off, o };
+        };
+        const bigLayer = mk();
+        const smallLayer = mk();
+
+        // draw each glyph with its own computed font
         chars.forEach((el) => {
           const ch = el.textContent;
           if (!ch?.trim()) return;
           const cs = getComputedStyle(el);
+          const fs = parseFloat(cs.fontSize) || fontPx;
+          const o = (fs > 40 ? bigLayer : smallLayer).o;
           o.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
           const r = el.getBoundingClientRect();
           const m = o.measureText(ch);
-          const asc = m.fontBoundingBoxAscent ?? fontPx * 0.8;
-          const desc = m.fontBoundingBoxDescent ?? fontPx * 0.2;
-          const lh = parseFloat(cs.lineHeight) || r.height || fontPx;
+          const asc = m.fontBoundingBoxAscent ?? fs * 0.8;
+          const desc = m.fontBoundingBoxDescent ?? fs * 0.2;
+          const lh = parseFloat(cs.lineHeight) || r.height || fs;
           const baseline = r.top - rr.top + (lh - (asc + desc)) / 2 + asc;
           o.fillText(ch, r.left - rr.left + r.width / 2, baseline);
         });
 
-        const data = o.getImageData(0, 0, off.width, off.height).data;
-        const stepPx = Math.max(2, Math.round(fontPx / 38));
-        const sp = Math.max(1, Math.round(stepPx * dpr));
-        const k = fontPx / 90;
-        type P = { x: number; y: number; hx: number; hy: number; vx: number; vy: number; s: number; d: number };
+        type P = { x: number; y: number; hx: number; hy: number; vx: number; vy: number; s: number; d: number; k: number };
         const ps: P[] = [];
-        for (let y = 0; y < off.height; y += sp) {
-          for (let x = 0; x < off.width; x += sp) {
-            if (data[(y * off.width + x) * 4 + 3] > 128) {
-              const hx = x / dpr;
-              const hy = y / dpr;
-              const a = rand(0, Math.PI * 2);
-              const v = rand(0.3, 3.4) * k;
-              ps.push({
-                x: hx,
-                y: hy,
-                hx,
-                hy,
-                vx: Math.cos(a) * v + 0.6 * k,
-                vy: Math.sin(a) * v - rand(0, 1) * k,
-                s: rand(0.9, 1.9) * Math.max(1, k * 0.9),
-                d: hx / w,
-              });
+        const sample = (layer: { off: HTMLCanvasElement; o: CanvasRenderingContext2D }, stepPx: number, k: number) => {
+          const { off, o } = layer;
+          const data = o.getImageData(0, 0, off.width, off.height).data;
+          const sp = Math.max(1, Math.round(stepPx * dpr));
+          for (let y = 0; y < off.height; y += sp) {
+            for (let x = 0; x < off.width; x += sp) {
+              if (data[(y * off.width + x) * 4 + 3] > 128) {
+                const hx = x / dpr;
+                const hy = y / dpr;
+                const a = rand(0, Math.PI * 2);
+                const v = rand(0.3, 3.4) * k;
+                ps.push({
+                  x: hx,
+                  y: hy,
+                  hx,
+                  hy,
+                  vx: Math.cos(a) * v + 0.6 * k,
+                  vy: Math.sin(a) * v - rand(0, 1) * k,
+                  s: rand(0.9, 1.9) * Math.max(1, k * 0.9),
+                  d: hx / w,
+                  k,
+                });
+              }
             }
           }
-        }
+        };
+        sample(bigLayer, Math.max(2, Math.round(fontPx / 38)), fontPx / 90);
+        sample(smallLayer, 1, 0.8);
 
         const color = fg();
         gsap.set(chars, { opacity: 0 });
@@ -721,8 +547,8 @@ export default function Hero() {
 
           for (const p of ps) {
             if (t < SCATTER) {
-              p.vx += Math.sin(p.y * 0.018 + t * 1.4) * 0.03 * f * k;
-              p.vy += Math.cos(p.x * 0.018 + t * 1.1) * 0.03 * f * k - 0.004 * f * k;
+              p.vx += Math.sin(p.y * 0.018 + t * 1.4) * 0.03 * f * p.k;
+              p.vy += Math.cos(p.x * 0.018 + t * 1.1) * 0.03 * f * p.k - 0.004 * f * p.k;
               const d = Math.pow(0.985, f);
               p.vx *= d;
               p.vy *= d;
@@ -743,7 +569,7 @@ export default function Hero() {
             if (d2 < R * R) {
               const d = Math.sqrt(d2) || 1;
               const s = 1 - d / R;
-              const F = s * s * 0.7 * k * f;
+              const F = s * s * 0.7 * p.k * f;
               p.vx += (dx / d) * F;
               p.vy += (dy / d) * F;
             }
@@ -814,7 +640,7 @@ export default function Hero() {
           });
           chars.forEach((ch, i) => {
             if (Math.random() < 0.5 * e) {
-              gsap.set(ch, { x: rand(-1, 1) * fontPx * 0.25 * e, skewX: rand(-25, 25) * e, scaleY: rand(0.6, 1.4) });
+              gsap.set(ch, { x: rand(-1, 1) * sizes[i] * 0.25 * e, skewX: rand(-25, 25) * e, scaleY: rand(0.6, 1.4) });
             } else {
               gsap.set(ch, { x: 0, skewX: 0, scaleY: 1 });
             }
@@ -864,7 +690,7 @@ export default function Hero() {
 
       /* ====================================================================== */
       /*  WARP                                                                  */
-      /*  A starfield streaks past behind the name, which stays perfectly still.*/
+      /*  A starfield streaks past behind the text, which stays perfectly still.*/
       /* ====================================================================== */
       const warp = (): Mode => {
         const { c, w, h } = prep(bg);
@@ -934,7 +760,7 @@ export default function Hero() {
       /*    line is sampled at a steady rate and never steps with mouse events. */
       /*  - Ink is drawn OPAQUE and faded by greyscale value on a canvas that   */
       /*    uses mix-blend-mode: difference. No translucent overlaps, so no     */
-      /*    beading, and the fade is perfectly smooth. Over the name the ink    */
+      /*    beading, and the fade is perfectly smooth. Over the text the ink   */
       /*    inverts, so you can see it.                                         */
       /* ====================================================================== */
       const draw = (): Mode => {
@@ -1090,9 +916,10 @@ export default function Hero() {
             tx = ptr.x - r.left;
             ty = ptr.y - r.top;
           } else {
-            // no cursor (touch / idle): sweep slowly across the name
-            tx = w / 2 + Math.sin(t * 0.9) * w * 0.28;
-            ty = h / 2 + Math.sin(t * 1.7) * fontPx * 0.5;
+            // no cursor (touch / idle): sweep slowly across the word
+            const wr = word.getBoundingClientRect();
+            tx = wr.left - r.left + wr.width / 2 + Math.sin(t * 0.9) * wr.width * 0.4;
+            ty = wr.top - r.top + wr.height / 2 + Math.sin(t * 1.7) * wr.height * 0.35;
           }
           torch.x += (tx - torch.x) * Math.min(1, 0.14 * f);
           torch.y += (ty - torch.y) * Math.min(1, 0.14 * f);
@@ -1136,7 +963,6 @@ export default function Hero() {
       /* ---------- mode controller: one effect at a time ---------- */
       const factories: Record<CmdId, () => Promise<Mode> | Mode> = {
         zerog,
-        shatter,
         dissolve,
         glitch,
         warp,
@@ -1204,11 +1030,6 @@ export default function Hero() {
           say(`No command for “${short}”. Click the box to see what's available.`);
           gsap.fromTo(promptEl, { x: -8 }, { x: 0, duration: 0.6, ease: "elastic.out(1, 0.35)" });
         },
-        pause: (paused) => {
-          held = paused;
-          if (paused) cycle?.pause();
-          else cycle?.play();
-        },
       };
 
       /* ---------- keyboard ---------- */
@@ -1222,12 +1043,11 @@ export default function Hero() {
           e.preventDefault();
           input.focus();
         }
-        if (e.key === "ArrowRight") step(1);
-        if (e.key === "ArrowLeft") step(-1);
       };
       window.addEventListener("keydown", onKey);
 
-      /* ---------- name wave ---------- */
+      /* ---------- text wave + blur focus ---------- */
+      /*  Letters near the cursor lift, and the blurred ones sharpen.           */
       const charY = chars.map((c) => gsap.quickTo(c, "y", { duration: 0.5, ease: "power3" }));
       const onMove = (e: PointerEvent) => {
         ptr.x = e.clientX;
@@ -1239,12 +1059,24 @@ export default function Hero() {
           const dx = e.clientX - (r.left + r.width / 2);
           const dy = e.clientY - (r.top + r.height / 2);
           const k = Math.exp(-(dx * dx + dy * dy) / (2 * s * s));
-          charY[i](-fontPx * 0.1 * k);
+          charY[i](-Math.max(4, sizes[i] * 0.1) * k);
+          if (baseBlur[i] > 0) {
+            gsap.to(c, {
+              filter: `blur(${blurPx(i) * (1 - 0.85 * k)}px)`,
+              duration: 0.6,
+              overwrite: "auto",
+            });
+          }
         });
       };
       const onLeave = () => {
         ptr.x = ptr.y = -9999;
         gsap.to(chars, { y: 0, duration: 0.9, ease: "elastic.out(1, 0.5)", overwrite: "auto" });
+        chars.forEach((c, i) => {
+          if (baseBlur[i] > 0) {
+            gsap.to(c, { filter: `blur(${blurPx(i)}px)`, duration: 0.9, overwrite: "auto" });
+          }
+        });
       };
       root.addEventListener("pointermove", onMove);
       root.addEventListener("pointerleave", onLeave);
@@ -1252,7 +1084,9 @@ export default function Hero() {
       /* ---------- resize: refresh metrics, end any effect on width change ---------- */
       let lastW = root.clientWidth;
       const onResize = () => {
-        fontPx = parseFloat(getComputedStyle(h1).fontSize) || 64;
+        fontPx = parseFloat(getComputedStyle(word).fontSize) || 120;
+        sizes = chars.map((c) => parseFloat(getComputedStyle(c).fontSize) || 12);
+        applyBlur();
         if (root.clientWidth !== lastW) {
           lastW = root.clientWidth;
           end();
@@ -1293,6 +1127,9 @@ export default function Hero() {
       window.addEventListener("scroll", onScroll, { passive: true });
 
       /* ---------- entrance ---------- */
+      const small = chars.filter((c) => c.closest("[data-small]"));
+      const big = chars.filter((c) => !c.closest("[data-small]"));
+
       if (reduced) {
         gsap.set(masks, { overflow: "visible" });
       } else {
@@ -1308,12 +1145,12 @@ export default function Hero() {
             onComplete: () => {
               gsap.set(masks, { overflow: "visible" }); // let the wave lift letters freely
               ready = true;
-              restart();
               phLoop();
             },
           })
-          .to(chars, { yPercent: 0, duration: 1.3, stagger: 0.045 })
-          .to("[data-fade]", { y: 0, opacity: 1, duration: 0.9, stagger: 0.12 }, "-=0.8");
+          .to(big, { yPercent: 0, duration: 1.3, stagger: 0.06 })
+          .to(small, { yPercent: 0, duration: 1, stagger: 0.012 }, "-=1.1")
+          .to("[data-fade]", { y: 0, opacity: 1, duration: 0.9, stagger: 0.12 }, "-=1.2");
       };
       document.fonts.ready.then(() => {
         if (!dead) ctx.add(intro);
@@ -1327,9 +1164,7 @@ export default function Hero() {
         root.removeEventListener("pointerleave", onLeave);
         autoEnd?.kill();
         active?.dispose();
-        cycle?.kill();
         phCall?.kill();
-        titleTween?.kill();
         replyTween?.kill();
         phTween?.kill();
         apiRef.current = null;
@@ -1338,7 +1173,6 @@ export default function Hero() {
 
     return () => {
       dead = true;
-      shardStyle.remove();
       ctx.revert();
     };
   }, []);
@@ -1346,7 +1180,7 @@ export default function Hero() {
   return (
     <section
       ref={rootRef}
-      className="relative isolate flex min-h-svh w-full flex-col items-center justify-center overflow-hidden bg-background text-foreground antialiased"
+      className="relative isolate min-h-svh w-full overflow-hidden bg-background text-foreground antialiased"
       style={{ touchAction: "pan-y" }}
     >
       {/* Warp starfield (behind the words) */}
@@ -1357,186 +1191,202 @@ export default function Hero() {
       />
 
       {/* Content */}
-      <div
-        ref={driftRef}
-        className="pointer-events-none relative z-10 flex w-full flex-col items-center px-5"
-      >
-        <h1
-          ref={nameRef}
-          aria-label={NAME}
-          className="select-none whitespace-nowrap font-normal leading-none"
-          style={{
-            fontFamily: display.style.fontFamily,
-            fontSize: "clamp(2.75rem, 11vw, 9rem)",
-            fontWeight: 500,
-            letterSpacing: "-0.055em",
-          }}
-        >
-          {NAME.split("").map((char, i) => (
-            <span
-              key={i}
-              data-mask
-              aria-hidden="true"
-              className={`-mx-[0.05em] -mb-[0.2em] -mt-[0.1em] inline-block overflow-hidden px-[0.05em] pb-[0.2em] pt-[0.1em] align-bottom ${
-                i < FIRST.length ? "text-foreground" : "text-foreground/80"
-              }`}
-            >
-              <span data-char className="inline-block will-change-transform">
-                {char === " " ? "\u00A0" : char}
-              </span>
-            </span>
-          ))}
-        </h1>
-
-        <p
-          ref={subRef}
-          data-fade
-          className="mt-5 whitespace-pre text-sm text-muted-foreground md:mt-6 md:text-base"
-          style={{ fontFamily: "var(--font-heading)" }}
-        >
-          <span ref={titleRef}>{ROLES[0]}</span>
-        </p>
-
-        {/* Prompt */}
-        <div
-          ref={promptRef}
-          data-fade
-          data-ui
-          className="pointer-events-auto relative mt-10 w-full max-w-lg md:mt-12"
-          style={{ fontFamily: "var(--font-body)" }}
-          onFocus={() => apiRef.current?.pause(true)}
-          onBlur={() => apiRef.current?.pause(false)}
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              submit();
-            }}
-            onClick={() => inputRef.current?.focus()}
-            className="flex items-center gap-2 rounded-2xl border border-border bg-background/60 py-2 pl-4 pr-2 backdrop-blur-md transition-colors focus-within:border-foreground/40"
+      <div ref={driftRef} className="pointer-events-none absolute inset-0 z-10">
+        {/* Prompt: left side on desktop, lower on mobile (z-20 keeps its popup above the word) */}
+        <div className="absolute inset-x-5 top-[24%] z-20 md:inset-x-auto md:inset-y-0 md:left-[5%] md:top-0 md:flex md:w-[26rem] md:max-w-[40vw] md:flex-col md:justify-center">
+          <div
+            ref={promptRef}
+            data-fade
+            data-ui
+            className="pointer-events-auto relative w-full"
+            style={{ fontFamily: "var(--font-body)" }}
           >
-            <input
-              ref={inputRef}
-              type="text"
-              value={value}
-              onChange={(e) => {
-                setValue(e.target.value);
-                setIdx(0);
-                navigated.current = false;
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                submit();
               }}
-              onKeyDown={onKeyDown}
-              onFocus={() => {
-                window.clearTimeout(blurTimer.current);
-                navigated.current = false;
-                // open upward if there isn't room below the prompt
-                const r = promptRef.current?.getBoundingClientRect();
-                if (r) {
-                  const below = window.innerHeight - r.bottom;
-                  setUp(below < 320 && r.top > below);
-                }
-                setFocused(true);
-              }}
-              onBlur={() => {
-                blurTimer.current = window.setTimeout(() => setFocused(false), 120);
-              }}
-              placeholder="Pick an effect…"
-              aria-label="Type or pick a command"
-              aria-autocomplete="list"
-              autoComplete="off"
-              spellCheck={false}
-              className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground md:text-base"
-            />
-            <kbd className="hidden shrink-0 rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground md:block">
-              /
-            </kbd>
-            <button
-              type="submit"
-              aria-label="Run"
-              className={`grid size-9 shrink-0 cursor-pointer place-items-center rounded-xl bg-primary text-background transition-opacity ${
-                value.trim() ? "opacity-100" : "opacity-40"
-              }`}
+              onClick={() => inputRef.current?.focus()}
+              className="flex items-center gap-2 rounded-2xl border border-foreground/30 bg-background/60 py-2 pl-4 pr-2 backdrop-blur-md transition-colors focus-within:border-foreground/60"
             >
-              <svg
-                viewBox="0 0 24 24"
-                className="size-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
+              <input
+                ref={inputRef}
+                type="text"
+                value={value}
+                onChange={(e) => {
+                  setValue(e.target.value);
+                  setIdx(0);
+                  navigated.current = false;
+                }}
+                onKeyDown={onKeyDown}
+                onFocus={() => {
+                  window.clearTimeout(blurTimer.current);
+                  navigated.current = false;
+                  // open upward if there isn't room below the prompt
+                  const r = promptRef.current?.getBoundingClientRect();
+                  if (r) {
+                    const below = window.innerHeight - r.bottom;
+                    setUp(below < 320 && r.top > below);
+                  }
+                  setFocused(true);
+                }}
+                onBlur={() => {
+                  blurTimer.current = window.setTimeout(() => setFocused(false), 120);
+                }}
+                placeholder="Pick an effect…"
+                aria-label="Type or pick a command"
+                aria-autocomplete="list"
+                autoComplete="off"
+                spellCheck={false}
+                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground md:text-base"
+              />
+              <kbd className="hidden shrink-0 rounded-md border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground md:block">
+                /
+              </kbd>
+              <button
+                type="submit"
+                aria-label="Run"
+                className={`grid size-9 shrink-0 cursor-pointer place-items-center rounded-xl bg-primary text-background transition-opacity ${
+                  value.trim() ? "opacity-100" : "opacity-40"
+                }`}
               >
-                <path d="M12 19V5M5 12l7-7 7 7" />
-              </svg>
-            </button>
-          </form>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="size-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 19V5M5 12l7-7 7 7" />
+                </svg>
+              </button>
+            </form>
 
-          {/* Options: shown as soon as the box is clicked, filtered as you type */}
-          {open && (
-            <div
-              ref={popRef}
-              role="listbox"
-              aria-label="Effects"
-              className={`absolute inset-x-0 z-10 rounded-2xl border border-border bg-background p-1.5 ${
-                up ? "bottom-full mb-2" : "top-full mt-2"
-              }`}
-            >
-              {!value.trim() && (
-                <p className="px-3 pb-1 pt-1.5 text-xs text-muted-foreground">
-                  Pick an effect, or type one
-                </p>
-              )}
-              {matches.length ? (
-                matches.map((c, i) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    role="option"
-                    aria-selected={i === active}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onMouseEnter={() => setIdx(i)}
-                    onClick={() => trigger(c)}
-                    className={`flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
-                      i === active ? "bg-muted" : ""
-                    }`}
-                  >
-                    <span className="text-foreground">{c.label}</span>
-                    <span className="truncate text-xs text-muted-foreground">{c.hint}</span>
-                  </button>
-                ))
-              ) : (
-                <p className="px-3 py-2 text-sm text-muted-foreground">
-                  No match. Clear the box to see every effect.
-                </p>
-              )}
-            </div>
-          )}
+            {/* Options: shown as soon as the box is clicked, filtered as you type */}
+            {open && (
+              <div
+                ref={popRef}
+                role="listbox"
+                aria-label="Effects"
+                className={`absolute inset-x-0 z-10 rounded-2xl border border-foreground/20 bg-background p-1.5 ${
+                  up ? "bottom-full mb-2" : "top-full mt-2"
+                }`}
+              >
+                {!value.trim() && (
+                  <p className="px-3 pb-1 pt-1.5 text-xs text-muted-foreground">
+                    Pick an effect, or type one
+                  </p>
+                )}
+                {matches.length ? (
+                  matches.map((c, i) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      role="option"
+                      aria-selected={i === active}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onMouseEnter={() => setIdx(i)}
+                      onClick={() => trigger(c)}
+                      className={`flex w-full cursor-pointer items-center justify-between gap-4 rounded-xl px-3 py-2 text-left text-sm transition-colors ${
+                        i === active ? "bg-muted" : ""
+                      }`}
+                    >
+                      <span className="text-foreground">{c.label}</span>
+                      <span className="truncate text-xs text-muted-foreground">{c.hint}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">
+                    No match. Clear the box to see every effect.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <p
+            ref={replyRef}
+            aria-live="polite"
+            className="mt-4 min-h-5 w-full text-left text-xs text-muted-foreground md:text-sm"
+            style={{ fontFamily: "var(--font-body)" }}
+          />
         </div>
 
-        <p
-          ref={replyRef}
-          aria-live="polite"
-          className="mt-4 min-h-5 w-full max-w-lg text-center text-xs text-muted-foreground md:text-sm"
-          style={{ fontFamily: "var(--font-body)" }}
-        />
+        {/* Portfolio + name: right of centre on desktop, bottom-left on mobile */}
+        <div className="absolute bottom-40 left-5 flex flex-col items-start gap-3 md:bottom-auto md:left-auto md:right-[3%] md:top-[60%] md:-translate-y-1/2 md:flex-row md:items-center md:gap-[2.5vw]">
+          <h1
+            ref={wordRef}
+            aria-label={`Portfolio of ${NAME}`}
+            className="select-none whitespace-nowrap text-[30vw] leading-[0.72] md:text-[min(13vw,14rem)]"
+            style={{
+              fontFamily: display.style.fontFamily,
+              fontWeight: 700,
+              letterSpacing: "-0.06em",
+            }}
+          >
+            {WORD.map((line, li) => (
+              <span key={line} className="block">
+                <Chars text={line} blur={BLUR[li]} />
+              </span>
+            ))}
+          </h1>
+
+          <p
+            data-small
+            aria-label={NAME}
+            className="select-none whitespace-nowrap text-[10px] font-bold uppercase leading-none tracking-wide md:text-xs"
+            style={{ fontFamily: mono.style.fontFamily }}
+          >
+            <Chars text={NAME.toUpperCase()} dim={FIRST.length} />
+          </p>
+        </div>
+
+        {/* Roles: two halves with a gap in the middle on desktop (the Reset pill sits there).
+            On mobile they form a 2x2 block above the pill. */}
+        <div
+          data-small
+          role="group"
+          aria-label="Roles"
+          className="absolute inset-x-5 bottom-16 grid grid-cols-2 text-[10px] font-bold leading-tight md:inset-x-[3%] md:bottom-8 md:grid-cols-[1fr_9rem_1fr] md:text-xs"
+          style={{ fontFamily: mono.style.fontFamily }}
+        >
+          <ul className="flex flex-col items-start gap-1 md:flex-row md:justify-between md:gap-4">
+            {ROLES.slice(0, 2).map((role) => (
+              <li key={role} aria-label={role} className="whitespace-nowrap">
+                <Chars text={role} />
+              </li>
+            ))}
+          </ul>
+          <div aria-hidden="true" className="hidden md:block" />
+          <ul className="flex flex-col items-end gap-1 md:flex-row md:justify-between md:gap-4">
+            {ROLES.slice(2).map((role) => (
+              <li key={role} aria-label={role} className="whitespace-nowrap">
+                <Chars text={role} />
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
 
-      {/* Overlay canvas (above the content): dissolve, glitch, draw, lights out, cracks */}
+      {/* Overlay canvas (above the content): dissolve, glitch, draw, lights out */}
       <canvas
         ref={fxRef}
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-30 size-full"
       />
 
-      {/* Reset pill (only while an effect is running) */}
+      {/* Reset pill (only while an effect is running): bottom centre, in the gap of the roles row */}
       {mode && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-6 z-40 flex justify-center md:bottom-8">
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-40 flex justify-center md:bottom-5">
           <button
             ref={pillRef}
             data-ui
             type="button"
             onClick={() => apiRef.current?.end()}
-            className="pointer-events-auto cursor-pointer rounded-xl border border-border bg-background/70 px-4 py-2.5 text-sm font-medium text-foreground backdrop-blur-md"
+            className="pointer-events-auto cursor-pointer rounded-xl border border-foreground/30 bg-background/70 px-4 py-2 text-sm font-medium text-foreground backdrop-blur-md"
             style={{ fontFamily: "var(--font-body)" }}
           >
             Reset <span className="ml-2 text-muted-foreground">Esc</span>
